@@ -1,0 +1,72 @@
+# แผนการทดลองใช้ LLM ในการคัดแยกข้อความแจ้งเตือนภัยพิบัติ (Experiment 01E) - Improved Zero-Shot Flat Classification
+
+เอกสารฉบับนี้กำหนดแผนและแนวทางการทดลองสำหรับ **Experiment 01E** ซึ่งเป็นการคัดแยกประเภทข้อความสถานการณ์ภัยพิบัติด้วยวิธี **เลเยอร์เดียวขั้นตอนเดียว (Single-Layer / Flat Classification)** โดยใช้การปรับปรุงคำสั่งแบบไม่มีตัวอย่าง (Improved Zero-Shot Prompting)
+
+การทดลองนี้ประเมินความแม่นยำ F1-Score และ Latency ของโมเดล MoE ทั้ง 3 รุ่นที่อุณหภูมิการทำงาน (Temperature) 4 ระดับ ได้แก่ **0.0, 0.1, 0.2, 0.3**
+
+---
+
+## 1. โมเดลประมวลผล (LLM Models)
+- **deepseek-v4-flash** (OpenRouter: `deepseek/deepseek-v4-flash`)
+- **typhoon-v2.5** (OpenTyphoon: `typhoon-v2.5-30b-a3b-instruct`)
+- **gemma-4** (OpenRouter: `google/gemma-4-26b-a4b-it`)
+
+---
+
+## 2. แหล่งข้อมูลและการเตรียมข้อมูล
+- **ที่อยู่ชุดข้อมูล (Dataset Location):** `e:/nlp-for-disaster/dataset/dataset_sample_500.csv` (ชุดข้อมูลสุ่ม 500 รายการเดียวกันกับการทดลองอื่น ๆ)
+
+---
+
+## 3. สิ่งที่ปรับปรุงจาก Experiment 01 (Zero-Shot เดิม)
+
+| ด้านที่ปรับปรุง | Exp 01 (เดิม) | Exp 01E (ปรับปรุง - Optimized) |
+|---|---|---|
+| System Prompt | Generic analyst role | บทบาทผู้เชี่ยวชาญด้าน humanitarian disaster triage |
+| Informativeness Decision | อธิบายสั้น ๆ | ขยายนิยามของ `informative` ให้ครอบคลุมข่าวสาร คำเตือน และคำอภิปรายเกี่ยวกับภัยพิบัติทั้งหมดเพื่อไม่ให้ตกหล่น (Recall สูงขึ้น) |
+| Category Description | ลิสต์สั้น ไม่มี signal words | เพิ่ม Signal Words ครบทุก category เพื่อช่วยในการเลือกคลาส |
+| Consistency Rule | ไม่มี | การยุบรวมคลาสให้สอดคล้องกันในการเลือก |
+
+---
+
+## 4. รูปแบบคำสั่งปรับปรุง (Improved Zero-Shot Prompt Design)
+
+### 4.1 คำสั่งระบบ (System Instruction)
+```
+You are a humanitarian disaster information analyst. Your task is to classify social media posts (tweets) collected during disaster events into exactly one category for emergency response analysis.
+```
+
+### 4.2 คำสั่งผู้ใช้ (User Prompt Template)
+```
+Tweet: "{tweet_text}"
+
+Classify the tweet into exactly ONE of the following categories. Choose the category that best represents the primary subject of the tweet:
+
+CATEGORY DEFINITIONS:
+1. not_informative: Completely off-topic, spam, or irrelevant content that does not refer to the disaster or its aftermath at all.
+2. injured_or_dead_people: Reports of casualties, deaths, fatalities, or injured people. (Signal words: killed, dead, casualties, injured, hospitalized)
+3. missing_or_found_people: Reports of individuals or groups who are missing or have been found/rescued. (Signal words: missing, search for, found, rescued)
+4. affected_individuals: Evacuees, displaced people, or survivors (without death or injury). (Signal words: evacuated, displaced, homeless, shelter, stranded)
+5. infrastructure_and_utility_damage: Damage to buildings, roads, bridges, power lines, or utilities. (Signal words: collapsed, damaged, outage, flooded, blackout)
+6. vehicle_damage: Damage to cars, trucks, boats, or planes. (Signal words: car submerged, vehicle damaged)
+7. rescue_volunteering_or_donation_effort: Relief goods, donations, volunteering, aid distribution, or rescue operations. (Signal words: donate, volunteers, aid, rescue team, relief)
+8. other_relevant_information: General news, weather forecasts, warnings, comments, political remarks, or opinions about the disaster that do not fit the specific categories above. (Signal words: warning, forecast, category, magnitude, news, report)
+
+Return your classification by calling the 'classify' function.
+```
+
+---
+
+## 5. แนวทางการจัดเก็บข้อมูลและประเมินผล
+ผลลัพธ์จะถูกจัดเก็บไว้ในโครงสร้างดังนี้:
+```text
+e:/nlp-for-disaster/exp1E/results/
+├── deepseek-v4-flash_temp_results.csv        <- บันทึกผลลัพธ์แยกตามอุณหภูมิ (0.0, 0.1, 0.2, 0.3)
+├── typhoon-v2.5_temp_results.csv             <- บันทึกผลลัพธ์แยกตามอุณหภูมิ (0.0, 0.1, 0.2, 0.3)
+├── gemma-4_temp_results.csv                  <- บันทึกผลลัพธ์แยกตามอุณหภูมิ (0.0, 0.1, 0.2, 0.3)
+├── model_comparison_metrics.csv              <- เปรียบเทียบ F1-Score ระหว่างโมเดลและอุณหภูมิใน Exp 1E
+└── confusion_matrices/                       <- ภาพ Confusion Matrix แยกรายโมเดลและอุณหภูมิ
+```
+
+### 5.1 โครงสร้างของไฟล์ CSV ผลลัพธ์
+`tweet_id`, `tweet_text`, `true_text_info`, `true_text_human`, `temperature`, `predicted_category`, `mapped_predicted_info`, `mapped_predicted_category`, `tweet_text_char_count`, `token_in_use`, `token_out_use`, `latency_seconds`

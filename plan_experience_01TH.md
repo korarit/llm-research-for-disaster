@@ -1,0 +1,107 @@
+# แผนการทดลองใช้ LLM ในการคัดแยกข้อความแจ้งเตือนภัยพิบัติภาษาไทย (Disaster Alert Labeling Experiment - 01TH)
+
+เอกสารฉบับนี้กำหนดแผนและแนวทางการทดลองสำหรับ **Experiment 01TH** ซึ่งเป็นการคัดแยกประเภทข้อความสถานการณ์ภัยพิบัติ **ภาษาไทย** ด้วยวิธี **เลเยอร์เดียวขั้นตอนเดียว (Single-Layer / Flat Classification)** 
+
+การทดลองนี้เป็นการนำชุดข้อมูลที่แปลไทยและแปลงบริบทเป็นประเทศไทยสำเร็จแล้วจำนวน 500 แถวจากไฟล์ [CrisisMMD_Thai_500.csv](file:///e:/nlp-for-disaster/data/CrisisMMD_Thai_500.csv) (ตามแผนงาน [plan_CrisisMMD_to_thai.md](file:///e:/nlp-for-disaster/plan_CrisisMMD_to_thai.md)) มาคัดแยกเพื่อประเมินความสามารถทางภาษาไทยของโมเดล MoE แต่ละรุ่น
+
+---
+
+## 1. วัตถุประสงค์ (Objectives)
+- ประเมินขีดความสามารถการทำ Zero-shot classification ข้อความโซเชียลมีเดียภาษาไทยของกลุ่มโมเดล MoE ทั้ง 3 รุ่น (`deepseek-v4-flash`, `typhoon-v2.5`, `Gemma 4`)
+- ศึกษาประสิทธิภาพและทดสอบระบบการคัดแยกแบบเลเยอร์เดียว (Single-Layer) ในภาษาไทย เพื่อวัดผลเป็นฐานข้อมูลหลัก (Baseline) ก่อนเริ่มทำการแยกสองเลเยอร์ในการทดลองถัดไป (02TH)
+
+---
+
+## 2. แหล่งข้อมูลและการเตรียมข้อมูล (Dataset & Preparation)
+- **แหล่งข้อมูลเข้า (Input Source):** ไฟล์ข้อมูลแปลไทย `e:/nlp-for-disaster/data/CrisisMMD_Thai_500.csv`
+- **โครงสร้างข้อมูลเข้าหลัก (Input Columns):**
+  - `tweet_id`: ไอดีข้อความ
+  - `translated_thai`: ข้อความโซเชียลมีเดียภาษาไทยที่ผ่านการแปลและแปลงสถานที่ในไทยอย่างเป็นธรรมชาติ
+- **เป้าหมายคำตอบเฉลย (Ground Truth Columns):**
+  - `true_text_info`: ระบุว่าข้อความเกี่ยวข้องหรือไม่ (`informative` / `not_informative`)
+  - `true_text_human`: ระบุหมวดหมู่การช่วยเหลือทางมนุษยธรรมดั้งเดิม
+
+---
+
+## 3. การกำหนดค่าโมเดลและโครงสร้าง Function Calling (Single-Layer TH)
+
+ระบบจะใช้โครงสร้าง Pydantic Schema แบบฟิลด์เดียวมาทำ **Function Calling (Function Call)** เพื่อความเสถียรของ Output ในภาษาไทย:
+
+```python
+from pydantic import BaseModel, Field
+from typing import Literal
+
+class SingleLayerClassificationResultTH(BaseModel):
+    category: Literal[
+        "not_informative",
+        "affected_individuals",
+        "infrastructure_and_utility_damage",
+        "injured_or_dead_people",
+        "missing_or_found_people",
+        "other_relevant_information",
+        "rescue_volunteering_or_donation_effort",
+        "vehicle_damage"
+    ] = Field(description="Choose the most specific category represented in the tweet")
+```
+
+---
+
+## 4. การออกแบบคำสั่ง (Single-Layer Prompt Design)
+
+คำสั่งระบบและคำแนะนำสำหรับผู้ใช้งานจะใช้เป็นภาษาอังกฤษเหมือนกับการทดลองดั้งเดิม (Experiment 01) 100% เพื่อควบคุมปัจจัยและวัดผลเชิงเปรียบเทียบข้ามภาษาได้อย่างถูกต้อง:
+
+### 4.1 คำสั่งระบบ (System Instruction)
+```markdown
+You are an expert humanitarian disaster analyst with extensive experience in classifying disaster-related content. Your task is to classify tweets into a single specific category based on objective evidence rather than emotional responses.
+```
+
+### 4.2 คำสั่งผู้ใช้ (User Prompt Template)
+```markdown
+Tweet: "{tweet_text}"
+
+CLASSIFICATION CRITERIA:
+Classify the tweet into exactly ONE of the following categories. Choose the most specific and dominant category represented in the text:
+
+- not_informative: The tweet does NOT contain specific information, represents only emotions, prayers, general opinions, political comments, jokes, or is completely unrelated to disaster management.
+- affected_individuals: Mentions displaced people, survivors, or evacuees who are affected but does NOT report deaths or injuries.
+- infrastructure_and_utility_damage: References damaged buildings, roads, bridges, electricity, water lines, or other utilities.
+- injured_or_dead_people: Reports specific numbers or accounts of injured, hospitalized, or deceased individuals.
+- missing_or_found_people: Mentions people who are currently missing, search/rescue missions looking for individuals, or people who have been found/rescued.
+- rescue_volunteering_or_donation_effort: Mentions relief goods, donation drives, financial aid, volunteer networks, or rescue team deployment.
+- vehicle_damage: References damaged cars, trucks, buses, trains, or rescue vehicles.
+- other_relevant_information: General informative reports such as weather forecasts, storm paths, satellite observations, or warnings without specific human or physical impact details.
+
+Return classification by calling the specified function.
+```
+
+---
+
+## 5. แผนการวัดผลและการจัดเก็บข้อมูล
+- **การแปลงข้อมูลกลับ (Mapping):** ทำการแปลงผลลัพธ์ของคลาส `not_informative` ไปเป็น `not_informative` (Informativeness) และ `not_humanitarian` (Category) เพื่อนำไปคำนวณ F1-Score ภาพรวมของภาษาไทย
+- **โครงสร้างไฟล์ผลลัพธ์:**
+  ```text
+  e:/nlp-for-disaster/exp1_TH/results/
+  ├── deepseek-v4-flash_results_th.csv
+  ├── typhoon-v2.5_results_th.csv
+  ├── gemma-4_results_th.csv
+  ├── th_model_comparison_metrics.csv
+  ├── th_model_comparison_chart.png
+  └── confusion_matrices/
+  ```
+
+### 5.1 โครงสร้างของไฟล์ CSV ผลลัพธ์รายโมเดล (Individual Model CSV Schema - TH)
+ไฟล์ผลลัพธ์แยกตามรุ่นโมเดลสำหรับภาษาไทย (`deepseek-v4-flash_results_th.csv`, `typhoon-v2.5_results_th.csv`, `gemma-4_results_th.csv`) จะจัดเก็บคำทำนาย (Label) ของ AI คู่ขนานไปกับข้อความแปลภาษาไทยและเฉลยจริง โดยประกอบไปด้วยคอลัมน์ดังนี้:
+
+| ชื่อคอลัมน์ (Column Name) | คำอธิบาย (Description) | ตัวอย่างข้อมูล (Example) |
+| :--- | :--- | :--- |
+| `tweet_id` | ไอดีข้อความทวีต (ตรงตามชุดข้อมูลต้นฉบับ) | `8.29177E+17` |
+| `translated_thai` | ข้อความโซเชียลมีเดียภาษาไทยที่แปลแล้วที่ส่งให้โมเดลวิเคราะห์ | *“ขอแรงใจให้เชียงรายด้วยครับ ตอนนี้บ้านผมน้ำท่วมสูงมาก...”* |
+| `true_text_info` | เฉลยจริง: ความเกี่ยวข้องภัยพิบัติ (Ground Truth) | `informative` / `not_informative` |
+| `true_text_human` | เฉลยจริง: หมวดหมู่ช่วยเหลือทางมนุษยธรรม (Ground Truth) | `rescue_volunteering_or_donation_effort` / `not_humanitarian` |
+| `predicted_category` | ผลการคัดแยกโดยตรงที่ AI ตอบกลับมาตาม Function Calling (Single-Layer TH) | `rescue_volunteering_or_donation_effort` / `not_informative` |
+| `mapped_predicted_info` | ผลความเกี่ยวข้อง (Informativeness) ที่ได้หลังการแปลงผล (Mapping) | `informative` / `not_informative` |
+| `mapped_predicted_category` | ผลหมวดหมู่ช่วยเหลือ (Category) ที่ได้หลังการแปลงผล (Mapping) | `rescue_volunteering_or_donation_effort` / `not_humanitarian` |
+| `tweet_text_char_count` | จำนวนตัวอักษรของข้อความภาษาอังกฤษต้นฉบับ | `42` |
+| `translated_thai_char_count` | จำนวนตัวอักษรของข้อความแปลภาษาไทย `translated_thai` | `65` |
+| `token_in_use` | จำนวน Token ขาเข้าที่ใช้ประมวลผล | `185` |
+| `token_out_use` | จำนวน Token ขาออกที่ใช้ประมวลผล | `15` |
