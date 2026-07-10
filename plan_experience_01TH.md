@@ -2,7 +2,7 @@
 
 เอกสารฉบับนี้กำหนดแผนและแนวทางการทดลองสำหรับ **Experiment 01TH** ซึ่งเป็นการคัดแยกประเภทข้อความสถานการณ์ภัยพิบัติ **ภาษาไทย** ด้วยวิธี **เลเยอร์เดียวขั้นตอนเดียว (Single-Layer / Flat Classification)** 
 
-การทดลองนี้เป็นการนำชุดข้อมูลที่แปลไทยและแปลงบริบทเป็นประเทศไทยสำเร็จแล้วจำนวน 500 แถวจากไฟล์ [CrisisMMD_Thai_500.csv](file:///e:/nlp-for-disaster/data/CrisisMMD_Thai_500.csv) (ตามแผนงาน [plan_CrisisMMD_to_thai.md](file:///e:/nlp-for-disaster/plan_CrisisMMD_to_thai.md)) มาคัดแยกเพื่อประเมินความสามารถทางภาษาไทยของโมเดล MoE แต่ละรุ่น
+การทดลองนี้เป็นการนำชุดข้อมูลที่แปลไทยและแปลงบริบทเป็นประเทศไทยสำเร็จแล้วจำนวน 1,000 แถวจากไฟล์ [CrisisMMD_Thai_1000.csv](file:///e:/nlp-for-disaster/dataset/CrisisMMD_Thai_1000.csv) (ตามแผนงาน [plan_CrisisMMD_to_thai.md](file:///e:/nlp-for-disaster/plan_CrisisMMD_to_thai.md)) มาคัดแยกเพื่อประเมินความสามารถทางภาษาไทยของโมเดล MoE แต่ละรุ่น
 
 ---
 
@@ -13,7 +13,7 @@
 ---
 
 ## 2. แหล่งข้อมูลและการเตรียมข้อมูล (Dataset & Preparation)
-- **แหล่งข้อมูลเข้า (Input Source):** ไฟล์ข้อมูลแปลไทย `e:/nlp-for-disaster/data/CrisisMMD_Thai_500.csv`
+- **แหล่งข้อมูลเข้า (Input Source):** ไฟล์ข้อมูลแปลไทย `e:/nlp-for-disaster/dataset/CrisisMMD_Thai_1000.csv`
 - **โครงสร้างข้อมูลเข้าหลัก (Input Columns):**
   - `tweet_id`: ไอดีข้อความ
   - `translated_thai`: ข้อความโซเชียลมีเดียภาษาไทยที่ผ่านการแปลและแปลงสถานที่ในไทยอย่างเป็นธรรมชาติ
