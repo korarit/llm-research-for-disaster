@@ -111,12 +111,15 @@ graph LR
 
 การประเมินเน้นทดสอบกับโมเดลภาษาขนาดใหญ่ที่ใช้สถาปัตยกรรม **Mixture-of-Experts (MoE)** ซึ่งช่วยลดการคำนวณลงโดยเปิดใช้งานพารามิเตอร์เฉพาะส่วน (Sparse Activation) ในระดับ Token:
 
-1. **deepseek-v4-flash** (`deepseek-v4-flash` เข้าถึงผ่าน OpenRouter API)
-   * เด่นเรื่องการใช้เหตุผลเชิงตรรกะและการตอบกลับข้อมูลตามโครงสร้าง JSON Schema ได้ถูกต้องแม่นยำสูง
-2. **typhoon-v2.5** (`typhoon-v2.5-30b-a3b-instruct` เข้าถึงผ่าน Typhoon API)
-   * โมเดลที่ได้รับการจูนโครงสร้างภาษาและการจัดเรียงโทเค็นให้รองรับภาษาไทยควบคู่กับภาษาอังกฤษในระดับสูง
-3. **gemma-4** (`gemma-4-26b-a4b-it` เข้าถึงผ่าน OpenRouter API)
-   * โมเดลสถาปัตยกรรม MoE ขนาดกลางรุ่นล่าสุดจาก Google ที่โดดเด่นด้านความเข้าใจงานทั่วไปและการปฏิบัติตามคำสั่งที่ซับซ้อน
+1. **deepseek-v4-flash** (`deepseek-v4-flash` เข้าถึงผ่าน OpenRouter API) [11]
+   * **สถาปัตยกรรม**: พัฒนาขึ้นบนโครงสร้าง **DeepSeekMoE** มีพารามิเตอร์ทั้งหมด **284 พันล้านพารามิเตอร์ (284B)** โดยมีพารามิเตอร์เปิดใช้งานขณะประมวลผลจริงเพียง **13 พันล้านพารามิเตอร์ (13B) ต่อโทเค็น** [11]
+   * **จุดเด่น**: ใช้กลไกการบีบอัด Context พิเศษอย่าง Compressed Sparse Attention (CSA), Heavily Compressed Attention (HCA) และการจำกัด residual ด้วย Manifold-Constrained Hyper-Connections (mHC) ทำให้รองรับ Context Window สูงสุดถึง 1 ล้านโทเค็น พร้อมมีความแม่นยำสูงในระดับโครงสร้าง JSON Schema [11]
+2. **typhoon-v2.5** (`typhoon-v2.5-30b-a3b-instruct` เข้าถึงผ่าน Typhoon API) [12]
+   * **สถาปัตยกรรม**: พัฒนาขึ้นจากฐานโครงสร้าง **Qwen2.5-30B-A3B** มีพารามิเตอร์ทั้งหมด **30 พันล้านพารามิเตอร์ (30B)** โดยมีพารามิเตอร์เปิดใช้งานจริงเพียง **3 พันล้านพารามิเตอร์ (3B)** ต่อคำสั่งหรือการคิด (A3B: Active 3 Billion) [12]
+   * **จุดเด่น**: รองรับ Context Window สูงสุด 256k โทเค็น ได้รับการจูนโครงสร้างภาษาและการจัดเรียงโทเค็นให้รองรับภาษาไทยควบคู่กับภาษาอังกฤษในระดับสูง พร้อมโครงสร้าง Function Calling ที่ดีเยี่ยม [12]
+3. **gemma-4** (`gemma-4-26b-a4b-it` เข้าถึงผ่าน OpenRouter API) [13]
+   * **สถาปัตยกรรม**: พัฒนาและเผยแพร่โดย Google DeepMind มีพารามิเตอร์รวมทั้งหมด **26 พันล้านพารามิเตอร์ (26B)** โดยเปิดใช้งานขณะประมวลผลจริงเพียง **4 พันล้านพารามิเตอร์ (4B)** ต่อ forward pass (A4B: Active 4 Billion) [13]
+   * **จุดเด่น**: รองรับ Context Window สูงสุด 256k โทเค็น โดดเด่นด้านความเข้าใจงานทั่วไปและการปฏิบัติตามคำสั่งที่ซับซ้อน มีโหมดความคิด "thinking mode" ที่ช่วยวิเคราะห์เป็นลำดับขั้นก่อนส่งคืนคำตอบ [13]
 
 ### 💡 พลวัตการจัดสรรทรัพยากรระดับ Token (Sparse Activation)
 
@@ -141,7 +144,7 @@ graph TD
 
 ## 4. แหล่งข้อมูลและการเตรียมข้อมูล (Dataset)
 
-* **ชุดข้อมูลทดสอบ**: สุ่มตัวอย่างแบบกระจายสม่ำเสมอ (Stratified Random Sampling) จำนวน 500 รายการจาก **CrisisMMD** (ชุดข้อมูลภัยพิบัติสากลปี 2017 ครอบคลุมพายุเฮอริเคน แผ่นดินไหว และไฟป่า) เพื่อรักษาขอบเขตการเปรียบเทียบให้เป็นแบบ Apple-to-Apple
+* **ชุดข้อมูลทดสอบ**: สุ่มตัวอย่างแบบกระจายสม่ำเสมอ (Stratified Random Sampling) จำนวน 500 รายการจาก **CrisisMMD** (ชุดข้อมูลภัยพิบัติสากลปี 2017 ครอบคลุมพายุเฮอริเคน แผ่นดินไหว และไฟป่า) เข้าถึงได้จากหน้าเว็บโครงการ [CrisisMMD Website](https://crisisnlp.qcri.org/crisismmd.html) โดยอ้างอิงรูปแบบการเก็บข้อมูลและทดสอบจากบทความวิชาการของ Ofli et al. (2020) [10]
 * **กลยุทธ์การแปล (Translation Strategy)**:
   * **English Dataset (`CrisisMMD_English_500.csv`)**: ทวีตภาษาอังกฤษดั้งเดิม
   * **Thai Dataset (`CrisisMMD_Thai_500.csv`)**: แปลงความหมายของข้อความเป็นภาษาไทยโดยรักษาความหมายและอารมณ์ดั้งเดิม เพื่อทดสอบประสิทธิภาพการทำงานข้ามภาษา (Cross-Lingual Capability) และความสอดคล้องเชิงความหมาย (Semantic Preservation)
@@ -606,5 +609,17 @@ e:/nlp-for-disaster/
    * 👉 ลิงก์เข้าถึงเอกสาร: [https://arxiv.org/abs/2406.02965](https://arxiv.org/abs/2406.02965)
 
 10. **การศึกษาเปรียบเทียบประสิทธิภาพการประมวลผลโมเดลมีผู้สอนและ multimodal บนข้อมูล CrisisMMD (Supervised Benchmark Reference):**
-    * Ofli, F., Alam, F., & Imran, M. (2020). *Analysis of Social Media Data using Multimodal Deep Learning for Disaster Response*. **Proceedings of the 17th International Conference on Information Systems for Crisis Response and Management (ISCRAM 2020)**.  
+    * Ferda Ofli, Firoj Alam, and Muhammad Imran, Analysis of Social Media Data using Multimodal Deep Learning for Disaster Response, In Proceedings of the 17th International Conference on Information Systems for Crisis Response and Management (ISCRAM), 2020, USA. [Bibtex]
     * 👉 ลิงก์เข้าถึงเอกสาร: [https://arxiv.org/abs/2004.11838](https://arxiv.org/abs/2004.11838)
+
+11. **รายงานทางเทคนิคของสถาปัตยกรรมและรายละเอียดโมเดล DeepSeek-V4 (DeepSeek-V4 MoE Reference):**
+    * DeepSeek-V4 Team. (2026). *DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence*. arXiv preprint arXiv:2606.19348.
+    * 👉 ลิงก์เข้าถึงเอกสาร: [https://arxiv.org/abs/2606.19348](https://arxiv.org/abs/2606.19348)
+
+12. **ข้อมูลคุณลักษณะทางเทคนิคของโมเดลภาษาไทย Typhoon-v2.5 (Typhoon-v2.5 MoE Reference):**
+    * SCB 10X. (2026). *Typhoon 2: A Family of Open Text and Multimodal Thai Large Language Models*. arXiv preprint arXiv:2412.13702.
+    * 👉 ลิงก์เข้าถึงเอกสาร: [https://arxiv.org/abs/2412.13702](https://arxiv.org/abs/2412.13702)
+
+13. **รายงานการวิจัยและข้อกำหนดทางสถาปัตยกรรมของ Gemma 4 (Gemma 4 MoE Reference):**
+    * Google DeepMind. (2026). *Gemma 4 Technical Report*. arXiv preprint arXiv:2607.02770.
+    * 👉 ลิงก์เข้าถึงเอกสาร: [https://arxiv.org/abs/2607.02770](https://arxiv.org/abs/2607.02770)
