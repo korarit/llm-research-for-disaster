@@ -1,0 +1,102 @@
+Running Experiment 1E models in parallel...
+[deepseek-v4-flash] Starting deepseek-v4-flash for temperature 0.0...
+[typhoon-v2.5] Starting typhoon-v2.5 for temperature 0.0...
+[gemma-4] Starting gemma-4 for temperature 0.0...
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.0] Progress: 100/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.0] Progress: 200/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.0] Progress: 300/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.0] Progress: 400/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.0] Progress: 500/500
+[typhoon-v2.5] Starting typhoon-v2.5 for temperature 0.1...
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.1] Progress: 100/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.1] Progress: 200/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.1] Progress: 300/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.1] Progress: 400/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.1] Progress: 500/500
+[typhoon-v2.5] Starting typhoon-v2.5 for temperature 0.2...
+[gemma-4] [gemma-4 Temp 0.0] Progress: 100/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.2] Progress: 100/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.2] Progress: 200/500
+[deepseek-v4-flash] Error deepseek-v4-flash (attempt 1/5): 'NoneType' object is not subscriptable
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.2] Progress: 300/500
+[deepseek-v4-flash] Error deepseek-v4-flash (attempt 1/5): 'NoneType' object is not subscriptable
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.0] Progress: 100/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.2] Progress: 400/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.2] Progress: 500/500
+[typhoon-v2.5] Starting typhoon-v2.5 for temperature 0.3...
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.3] Progress: 100/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.3] Progress: 200/500
+[gemma-4] [gemma-4 Temp 0.0] Progress: 200/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.3] Progress: 300/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.3] Progress: 400/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.3] Progress: 500/500
+[typhoon-v2.5] Finished all temperatures for typhoon-v2.5.
+Finished typhoon-v2.5 evaluation.
+[gemma-4] [gemma-4 Temp 0.0] Progress: 300/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.0] Progress: 200/500
+[gemma-4] [gemma-4 Temp 0.0] Progress: 400/500
+[gemma-4] [gemma-4 Temp 0.0] Progress: 500/500
+[gemma-4] Starting gemma-4 for temperature 0.1...
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.0] Progress: 300/500
+[gemma-4] [gemma-4 Temp 0.1] Progress: 100/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.0] Progress: 400/500
+[gemma-4] [gemma-4 Temp 0.1] Progress: 200/500
+[gemma-4] [gemma-4 Temp 0.1] Progress: 300/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.0] Progress: 500/500
+[deepseek-v4-flash] Starting deepseek-v4-flash for temperature 0.1...
+[gemma-4] [gemma-4 Temp 0.1] Progress: 400/500
+[gemma-4] [gemma-4 Temp 0.1] Progress: 500/500
+[gemma-4] Starting gemma-4 for temperature 0.2...
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.1] Progress: 100/500
+[gemma-4] [gemma-4 Temp 0.2] Progress: 100/500
+[gemma-4] [gemma-4 Temp 0.2] Progress: 200/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.1] Progress: 200/500
+[gemma-4] Error gemma-4 (attempt 1/5): Unterminated string starting at: line 1 column 14 (char 13)
+[gemma-4] [gemma-4 Temp 0.2] Progress: 300/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.1] Progress: 300/500
+[gemma-4] [gemma-4 Temp 0.2] Progress: 400/500
+[gemma-4] [gemma-4 Temp 0.2] Progress: 500/500
+[gemma-4] Starting gemma-4 for temperature 0.3...
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.1] Progress: 400/500
+[gemma-4] [gemma-4 Temp 0.3] Progress: 100/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.1] Progress: 500/500
+[deepseek-v4-flash] Starting deepseek-v4-flash for temperature 0.2...
+[gemma-4] [gemma-4 Temp 0.3] Progress: 200/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.2] Progress: 100/500
+[gemma-4] [gemma-4 Temp 0.3] Progress: 300/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.2] Progress: 200/500
+[gemma-4] [gemma-4 Temp 0.3] Progress: 400/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.2] Progress: 300/500
+[gemma-4] [gemma-4 Temp 0.3] Progress: 500/500
+[gemma-4] Finished all temperatures for gemma-4.
+Finished gemma-4 evaluation.
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.2] Progress: 400/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.2] Progress: 500/500
+[deepseek-v4-flash] Starting deepseek-v4-flash for temperature 0.3...
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.3] Progress: 100/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.3] Progress: 200/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.3] Progress: 300/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.3] Progress: 400/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.3] Progress: 500/500
+[deepseek-v4-flash] Finished all temperatures for deepseek-v4-flash.
+Finished deepseek-v4-flash evaluation.
+
+All models finished execution. Evaluating Experiment 1E results...
+
+Saved Exp 1E comparison metrics to e:/nlp-for-disaster/exp1E/results\model_comparison_metrics.csv
+                model  temperature  ...  avg_latency_seconds  total_tokens_used
+0   deepseek-v4-flash          0.0  ...             3.606248             402542
+1   deepseek-v4-flash          0.1  ...             3.053591             399773
+2   deepseek-v4-flash          0.2  ...             2.854019             399150
+3   deepseek-v4-flash          0.3  ...             2.361132             398949
+4        typhoon-v2.5          0.0  ...             0.296062             323834
+5        typhoon-v2.5          0.1  ...             0.299538             323827
+6        typhoon-v2.5          0.2  ...             0.316188             323831
+7        typhoon-v2.5          0.3  ...             0.308741             323830
+8             gemma-4          0.0  ...             2.219916             299523
+9             gemma-4          0.1  ...             1.912874             299574
+10            gemma-4          0.2  ...             1.990034             299759
+11            gemma-4          0.3  ...             2.645748             301132
+
+[12 rows x 6 columns]
+Experiment 1E complete.

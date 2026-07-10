@@ -1,0 +1,104 @@
+Running Experiment 3E models in parallel...
+[gemma-4] Starting gemma-4 for temperature 0.0...
+[deepseek-v4-flash] Starting deepseek-v4-flash for temperature 0.0...
+[typhoon-v2.5] Starting typhoon-v2.5 for temperature 0.0...
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.0] Progress: 100/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.0] Progress: 200/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.0] Progress: 300/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.0] Progress: 400/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.0] Progress: 100/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.0] Progress: 500/500
+[typhoon-v2.5] Starting typhoon-v2.5 for temperature 0.1...
+[gemma-4] [gemma-4 Temp 0.0] Progress: 100/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.1] Progress: 100/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.1] Progress: 200/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.1] Progress: 300/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.0] Progress: 200/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.1] Progress: 400/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.1] Progress: 500/500
+[typhoon-v2.5] Starting typhoon-v2.5 for temperature 0.2...
+[gemma-4] [gemma-4 Temp 0.0] Progress: 200/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.2] Progress: 100/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.2] Progress: 200/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.2] Progress: 300/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.0] Progress: 300/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.2] Progress: 400/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.2] Progress: 500/500
+[typhoon-v2.5] Starting typhoon-v2.5 for temperature 0.3...
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.3] Progress: 100/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.3] Progress: 200/500
+[typhoon-v2.5] Error Agent 1 typhoon-v2.5 (attempt 1/5): Error code: 429 - {'detail': "You've hit the rate limit for this service. For higher request limits, consider using the Typhoon model at https://api.together.ai/models."}
+[typhoon-v2.5] Error Agent 2 typhoon-v2.5 (attempt 1/5): Error code: 429 - {'detail': "You've hit the rate limit for this service. For higher request limits, consider using the Typhoon model at https://api.together.ai/models."}
+[typhoon-v2.5] Error Agent 2 typhoon-v2.5 (attempt 1/5): Error code: 429 - {'detail': "You've hit the rate limit for this service. For higher request limits, consider using the Typhoon model at https://api.together.ai/models."}
+[typhoon-v2.5] Error Agent 2 typhoon-v2.5 (attempt 1/5): Error code: 429 - {'detail': "You've hit the rate limit for this service. For higher request limits, consider using the Typhoon model at https://api.together.ai/models."}
+[typhoon-v2.5] Error Agent 1 typhoon-v2.5 (attempt 1/5): Error code: 429 - {'detail': "You've hit the rate limit for this service. For higher request limits, consider using the Typhoon model at https://api.together.ai/models."}
+[gemma-4] [gemma-4 Temp 0.0] Progress: 300/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.3] Progress: 300/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.3] Progress: 400/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.0] Progress: 400/500
+[typhoon-v2.5] [typhoon-v2.5 Temp 0.3] Progress: 500/500
+[typhoon-v2.5] Finished all temperatures for typhoon-v2.5.
+Finished typhoon-v2.5 evaluation.
+[gemma-4] [gemma-4 Temp 0.0] Progress: 400/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.0] Progress: 500/500
+[deepseek-v4-flash] Starting deepseek-v4-flash for temperature 0.1...
+[gemma-4] [gemma-4 Temp 0.0] Progress: 500/500
+[gemma-4] Starting gemma-4 for temperature 0.1...
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.1] Progress: 100/500
+[gemma-4] [gemma-4 Temp 0.1] Progress: 100/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.1] Progress: 200/500
+[gemma-4] [gemma-4 Temp 0.1] Progress: 200/500
+[gemma-4] [gemma-4 Temp 0.1] Progress: 300/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.1] Progress: 300/500
+[gemma-4] [gemma-4 Temp 0.1] Progress: 400/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.1] Progress: 400/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.1] Progress: 500/500
+[deepseek-v4-flash] Starting deepseek-v4-flash for temperature 0.2...
+[gemma-4] [gemma-4 Temp 0.1] Progress: 500/500
+[gemma-4] Starting gemma-4 for temperature 0.2...
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.2] Progress: 100/500
+[gemma-4] [gemma-4 Temp 0.2] Progress: 100/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.2] Progress: 200/500
+[gemma-4] [gemma-4 Temp 0.2] Progress: 200/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.2] Progress: 300/500
+[gemma-4] [gemma-4 Temp 0.2] Progress: 300/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.2] Progress: 400/500
+[gemma-4] [gemma-4 Temp 0.2] Progress: 400/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.2] Progress: 500/500
+[deepseek-v4-flash] Starting deepseek-v4-flash for temperature 0.3...
+[gemma-4] [gemma-4 Temp 0.2] Progress: 500/500
+[gemma-4] Starting gemma-4 for temperature 0.3...
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.3] Progress: 100/500
+[gemma-4] [gemma-4 Temp 0.3] Progress: 100/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.3] Progress: 200/500
+[gemma-4] [gemma-4 Temp 0.3] Progress: 200/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.3] Progress: 300/500
+[gemma-4] [gemma-4 Temp 0.3] Progress: 300/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.3] Progress: 400/500
+[gemma-4] [gemma-4 Temp 0.3] Progress: 400/500
+[deepseek-v4-flash] [deepseek-v4-flash Temp 0.3] Progress: 500/500
+[deepseek-v4-flash] Finished all temperatures for deepseek-v4-flash.
+Finished deepseek-v4-flash evaluation.
+[gemma-4] [gemma-4 Temp 0.3] Progress: 500/500
+[gemma-4] Finished all temperatures for gemma-4.
+Finished gemma-4 evaluation.
+
+All models finished execution. Evaluating Experiment 3E results...
+
+Saved Exp 3E comparison metrics to e:/nlp-for-disaster/exp3E/results\model_comparison_metrics.csv
+                model  temperature  ...  avg_latency_seconds  total_tokens_used
+0   deepseek-v4-flash          0.0  ...             2.538554             669068
+1   deepseek-v4-flash          0.1  ...             3.667721             676817
+2   deepseek-v4-flash          0.2  ...             2.683810             669837
+3   deepseek-v4-flash          0.3  ...             2.751049             668317
+4        typhoon-v2.5          0.0  ...             0.541718             554037
+5        typhoon-v2.5          0.1  ...             0.524233             553207
+6        typhoon-v2.5          0.2  ...             0.481233             552387
+7        typhoon-v2.5          0.3  ...             0.484137             556481
+8             gemma-4          0.0  ...             2.831921             469058
+9             gemma-4          0.1  ...             3.479741             472837
+10            gemma-4          0.2  ...             2.609650             468326
+11            gemma-4          0.3  ...             2.673463             469083
+
+[12 rows x 6 columns]
+Experiment 3E complete.
