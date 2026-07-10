@@ -1,0 +1,74 @@
+--- Exp 3 ---
+### 📊 Exp 3: Original 2-Agent Sequential
+| Temp | Model / Method | Informativeness F1 | Diff vs Best Single | Category F1 | Diff vs Best Single |
+|---|---|---|---|---|---|
+| **0.0** | deepseek-v4-flash | 0.7786 | - | 0.5507 | - |
+| | typhoon-v2.5 | 0.6845 | - | 0.4767 | - |
+| | gemma-4 | 0.7766 | - | 0.5410 | - |
+| | 🗳️ **Ensemble (Vote 2/3)** | **0.7600** | **-0.0186** (vs deepseek) | **0.5329** | **-0.0178** (vs deepseek) |
+|---|---|---|---|---|---|
+| **0.1** | deepseek-v4-flash | 0.7888 | - | 0.5474 | - |
+| | typhoon-v2.5 | 0.6942 | - | 0.4795 | - |
+| | gemma-4 | 0.7814 | - | 0.5487 | - |
+| | 🗳️ **Ensemble (Vote 2/3)** | **0.7622** | **-0.0266** (vs deepseek) | **0.5271** | **-0.0216** (vs gemma) |
+|---|---|---|---|---|---|
+| **0.2** | deepseek-v4-flash | 0.7774 | - | 0.5532 | - |
+| | typhoon-v2.5 | 0.6867 | - | 0.4742 | - |
+| | gemma-4 | 0.7862 | - | 0.5371 | - |
+| | 🗳️ **Ensemble (Vote 2/3)** | **0.7581** | **-0.0282** (vs gemma) | **0.5362** | **-0.0171** (vs deepseek) |
+|---|---|---|---|---|---|
+| **0.3** | deepseek-v4-flash | 0.7876 | - | 0.5474 | - |
+| | typhoon-v2.5 | 0.6887 | - | 0.4744 | - |
+| | gemma-4 | 0.7771 | - | 0.5506 | - |
+| | 🗳️ **Ensemble (Vote 2/3)** | **0.7581** | **-0.0295** (vs deepseek) | **0.5312** | **-0.0194** (vs gemma) |
+|---|---|---|---|---|---|
+
+--- Exp 3E ---
+### 📊 Exp 3E: Optimized 2-Agent Sequential
+| Temp | Model / Method | Informativeness F1 | Diff vs Best Single | Category F1 | Diff vs Best Single |
+|---|---|---|---|---|---|
+| **0.0** | deepseek-v4-flash | 0.8247 | - | 0.5609 | - |
+| | typhoon-v2.5 | 0.8285 | - | 0.5679 | - |
+| | gemma-4 | 0.8188 | - | 0.5854 | - |
+| | 🗳️ **Ensemble (Vote 2/3)** | **0.8275** | **-0.0010** (vs typhoon) | **0.5718** | **-0.0136** (vs gemma) |
+|---|---|---|---|---|---|
+| **0.1** | deepseek-v4-flash | 0.8405 | - | 0.5772 | - |
+| | typhoon-v2.5 | 0.8296 | - | 0.5681 | - |
+| | gemma-4 | 0.8199 | - | 0.5783 | - |
+| | 🗳️ **Ensemble (Vote 2/3)** | **0.8428** | **+0.0023** (vs deepseek) | **0.5921** | **+0.0137** (vs gemma) |
+|---|---|---|---|---|---|
+| **0.2** | deepseek-v4-flash | 0.8347 | - | 0.5676 | - |
+| | typhoon-v2.5 | 0.8224 | - | 0.5562 | - |
+| | gemma-4 | 0.8143 | - | 0.5738 | - |
+| | 🗳️ **Ensemble (Vote 2/3)** | **0.8380** | **+0.0033** (vs deepseek) | **0.5771** | **+0.0033** (vs gemma) |
+|---|---|---|---|---|---|
+| **0.3** | deepseek-v4-flash | 0.8343 | - | 0.5752 | - |
+| | typhoon-v2.5 | 0.8278 | - | 0.5714 | - |
+| | gemma-4 | 0.8171 | - | 0.5870 | - |
+| | 🗳️ **Ensemble (Vote 2/3)** | **0.8305** | **-0.0038** (vs deepseek) | **0.5930** | **+0.0060** (vs gemma) |
+|---|---|---|---|---|---|
+
+--- Exp 3F ---
+### 📊 Exp 3F: Optimized 2-Agent Sequential Few-Shot
+| Temp | Model / Method | Informativeness F1 | Diff vs Best Single | Category F1 | Diff vs Best Single |
+|---|---|---|---|---|---|
+| **0.0** | deepseek-v4-flash | 0.8463 | - | 0.6058 | - |
+| | typhoon-v2.5 | 0.7660 | - | 0.5511 | - |
+| | gemma-4 | 0.8469 | - | 0.6126 | - |
+| | 🗳️ **Ensemble (Vote 2/3)** | **0.8295** | **-0.0174** (vs gemma) | **0.6000** | **-0.0126** (vs gemma) |
+|---|---|---|---|---|---|
+| **0.1** | deepseek-v4-flash | 0.8359 | - | 0.5974 | - |
+| | typhoon-v2.5 | 0.7820 | - | 0.5601 | - |
+| | gemma-4 | 0.8460 | - | 0.6150 | - |
+| | 🗳️ **Ensemble (Vote 2/3)** | **0.8307** | **-0.0153** (vs gemma) | **0.5965** | **-0.0185** (vs gemma) |
+|---|---|---|---|---|---|
+| **0.2** | deepseek-v4-flash | 0.8458 | - | 0.5941 | - |
+| | typhoon-v2.5 | 0.7778 | - | 0.5550 | - |
+| | gemma-4 | 0.8424 | - | 0.6147 | - |
+| | 🗳️ **Ensemble (Vote 2/3)** | **0.8357** | **-0.0101** (vs deepseek) | **0.5938** | **-0.0210** (vs gemma) |
+|---|---|---|---|---|---|
+| **0.3** | deepseek-v4-flash | 0.8430 | - | 0.6049 | - |
+| | typhoon-v2.5 | 0.7771 | - | 0.5592 | - |
+| | gemma-4 | 0.8456 | - | 0.6130 | - |
+| | 🗳️ **Ensemble (Vote 2/3)** | **0.8329** | **-0.0128** (vs gemma) | **0.6001** | **-0.0129** (vs gemma) |
+|---|---|---|---|---|---|
