@@ -499,7 +499,6 @@ graph TD
 
 ก่อนเริ่มประเมินผล ให้ติดตั้ง API Key ในไฟล์ระบบ `.env` ที่อยู่ในไดเรกทอรีหลักของโปรเจกต์:
 ```env
-DEEPSEEK_API_KEY="your_api_key"
 TYPHOON_API_KEY="your_api_key"
 OPENROUTER_API_KEY="your_api_key"
 ```
