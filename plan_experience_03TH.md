@@ -60,49 +60,94 @@ class Agent2CategoryResultTH(BaseModel):
 
 ---
 
-## 4. การออกแบบคำสั่ง (2-Agent Prompt Design)
+## 4. การออกแบบคำสั่ง (2-Agent Prompt Design) - นำ Prompt Concept จาก 03E มาปรับใช้
 
-คำสั่งระบบและคำแนะนำสำหรับผู้ใช้งานจะใช้เป็นภาษาอังกฤษเหมือนกับการทดลองดั้งเดิม (Experiment 03) 100% เพื่อควบคุมปัจจัยและวัดผลเชิงเปรียบเทียบข้ามภาษาได้อย่างถูกต้อง:
+ระบบ Pipeline สองขั้นตอน (Sequential Cascade Pipeline) จะแบ่งหน้าที่การตัดสินใจออกเป็น 2 เอเจนต์ โดยคำสั่งระบบและคำสั่งสำหรับผู้ใช้งานยังคงใช้ภาษาอังกฤษเป็นหลัก แต่ปรับปรุงเนื้อความและ Signal Words รวมถึงตัวอย่าง Edge Cases ให้เข้ากับบริบทภาษาไทย เพื่อให้โมเดลจำแนกผลได้อย่างละเอียดและรวดเร็ว:
 
 ### 4.1 เอเจนต์ตัวที่ 1 (Agent 1: Informativeness Filter)
 
 - **System Instruction:**
   ```markdown
-  You are an expert humanitarian disaster analyst. Your task is to analyze tweets and determine if they contain specific information about disaster impact or response efforts.
+  You are a disaster information gatekeeper. Your ONLY job is to decide whether a tweet contains specific, factual information about a disaster — not to classify its content.
+
+  BIAS RULE: When in doubt, lean toward 'informative'. Only classify as 'not_informative' when the tweet is CLEARLY emotional-only, political, or unrelated. It is worse to miss real disaster information than to pass through a borderline case.
   ```
 - **User Prompt:**
   ```markdown
   Tweet: "{tweet_text}"
 
-  CLASSIFICATION CRITERIA:
-  Determine if the tweet contains SPECIFIC information:
-  - informative: Contains SPECIFIC disaster impact/response evidence, facts, or details (such as reports of damage, injuries, rescue activities, weather updates, donation needs).
-  - not_informative: Generic statements, emotions only (prayers, condolences), political arguments, jokes, or completely unrelated content.
+  Does this tweet contain SPECIFIC, FACTUAL information about a disaster event?
 
-  Return classification by calling the specified function.
+  informative — Mark as informative if the tweet contains ANY of:
+    - Specific numbers: casualty counts, displaced persons, missing people, damage estimates
+    - Named locations with concrete disaster impact described
+    - Factual descriptions of physical destruction (infrastructure, buildings, vehicles, utilities)
+    - Reports of rescue, aid, or emergency response operations with details
+    - Measurable data: wind speed, magnitude, flood levels, temperature extremes
+    - Weather forecasts, warnings, storm tracks, magnitude reports, or direct discussion referencing a specific disaster (e.g., "ส่งกำลังใจให้ผู้ประสบภัยน้ำท่วมเชียงราย #น้ำท่วมเชียงราย" contains the Chiang Rai flood keyword).
+
+  not_informative — ONLY mark as not_informative if the tweet contains EXCLUSIVELY:
+    - Pure emotional expression (prayers, sympathy, fear, grief) with NO specific disaster references or details (e.g., "ขอส่งกำลังใจให้ทุกคนปลอดภัย").
+    - Political argument or blame with NO specific disaster impact described.
+    - Jokes, obvious sarcasm, or clear misinformation.
+    - Completely off-topic content unrelated to the disaster.
+
+  Call the function 'filter_informativeness' with your decision.
   ```
 
 ### 4.2 เอเจนต์ตัวที่ 2 (Agent 2: Category Classifier)
 
 - **System Instruction:**
   ```markdown
-  You are an expert humanitarian disaster analyst. Your task is to classify a disaster-related tweet into the dominant humanitarian category based on objective evidence.
+  You are a disaster content categorizer. The tweet you receive has already been confirmed as containing specific disaster information. Your job is to identify its PRIMARY humanitarian content category.
+
+  CORE PRINCIPLE: Choose the MOST SPECIFIC category that fits the tweet's dominant subject. Use 'other_relevant_information' only as a last resort when no other category applies.
   ```
 - **User Prompt:**
   ```markdown
   Tweet: "{tweet_text}"
 
-  CLASSIFICATION CRITERIA:
-  Identify the DOMINANT content of this disaster-related tweet. Choose exactly ONE category:
-  - affected_individuals: Mentions displaced people, survivors, emotional responses (NOT injured/dead).
-  - infrastructure_and_utility_damage: References damaged buildings, roads, bridges, power/water utilities.
-  - injured_or_dead_people: Reports injuries, deaths, or specific casualty numbers.
-  - missing_or_found_people: Mentions people who are missing, found, or rescued by name or count.
-  - other_relevant_information: Weather data, satellite images, warning alerts without specific physical/human impact.
-  - rescue_volunteering_or_donation_effort: Mentions donations, rescue missions, aid, volunteers.
-  - vehicle_damage: References damaged cars, trucks, ambulances, buses.
+  This tweet has been confirmed as informative about a disaster. Classify it into the SINGLE most dominant humanitarian category using this priority order:
 
-  Return classification by calling the specified function.
+  1. injured_or_dead_people (CHECK FIRST)
+     Deaths, fatalities, injuries, casualty counts, hospitalized persons
+     Thai signal words: เสียชีวิต, ตาย, เสียชีวิตแล้ว, ผู้เสียชีวิต, พบร่าง, พบศพ, ยอดเสียชีวิต, บาดเจ็บ, ได้รับบาดเจ็บ, เจ็บ, เจ็บสาหัส, บาดเจ็บสาหัส, ส่งโรงพยาบาล, ส่งรพ., รักษาตัวที่โรงพยาบาล, กู้ชีพพบร่าง
+     ⚠ Takes priority over affected_individuals and infrastructure damage if any death or injury is mentioned.
+
+  2. missing_or_found_people
+     Specific individuals unaccounted for, active search for named/counted persons, confirmed rescues of specific people
+     Thai signal words: สูญหาย, หายตัว, หาย, สูญหายไป, ตามหา, ค้นหา, ค้นหาผู้สูญหาย, พบตัวแล้ว, เจอแล้ว, พบตัว, ช่วยชีวิตได้แล้ว, ช่วยเหลือได้แล้ว, รอดชีวิต, ปลอดภัยแล้ว, ติดต่อไม่ได้, ยังไม่พบตัว, ขาดการติดต่อ
+     ⚠ About SPECIFIC INDIVIDUALS — not general rescue team deployment.
+
+  3. affected_individuals
+     Displacement and evacuation WITHOUT reported deaths/injuries
+     Thai signal words: อพยพ, ถูกอพยพ, หนีน้ำ, พลัดถิ่น, ไร้ที่อยู่อาศัย, ไร้บ้าน, ศูนย์อพยพ, สถานที่พักพิง, จุดพักพิง, ติดอยู่, ติดค้าง, ออกไม่ได้, ผู้รอดชีวิต, ผู้ประสบภัย, ชาวบ้านเดือดร้อน, บ้านน้ำท่วม
+     ⚠ Only use when NO deaths or injuries are mentioned.
+
+  4. infrastructure_and_utility_damage
+     Damage to built environment structures (not vehicles)
+     Thai signal words: ถล่ม, ทรุดตัว, พังทลาย, ยุบตัว, พังเสียหาย, ได้รับความเสียหาย, เสียหาย, พัง, ไฟดับ, น้ำประปาไม่ไหล, ไม่มีไฟฟ้า, สัญญาณขาดหาย, น้ำท่วม, ถนนถูกน้ำท่วม, ท่วมถนน, น้ำท่วมขัง, ถนนขาด, ถนนพัง, สะพานขาด, สะพานพัง, เส้นทางชำรุด, เสาไฟล้ม, อาคารถล่ม
+     ⚠ Do NOT use when vehicles are the primary subject.
+
+  5. vehicle_damage
+     Vehicles as the MAIN focus of the damage reported
+     Thai signal words: รถจมน้ำ, รถยนต์จมน้ำ, รถพัง, รถยนต์เสียหาย, รถได้รับความเสียหาย, เรือล่ม, เรือพัง, เรืออับปาง, เรือจม, รถไหลไปกับน้ำ, รถโดนพัดไป, รถคว่ำ, รถบรรทุกคว่ำ
+     ⚠ Only when vehicles are the PRIMARY topic, not a side mention.
+
+  6. rescue_volunteering_or_donation_effort
+     Organized emergency response, humanitarian aid, volunteer mobilization, emergency helpline sharing, relief distribution
+     Thai signal words: บริจาค, เปิดรับบริจาค, เงินบริจาค, สมทบทุน, ระดมทุน, ร่วมบริจาค, จิตอาสา, อาสาสมัคร, อาสา, ถุงยังชีพ, ข้าวกล่อง, แจกของ, ความช่วยเหลือ, สิ่งของช่วยเหลือ, แจกจ่ายสิ่งของ, หน่วยกู้ภัย, ทีมกู้ภัย, กู้ภัย, กู้ชีพ, ลงพื้นที่ช่วยเหลือ
+     ⚠ About COLLECTIVE ORGANIZED EFFORTS — not rescue of individual named persons.
+
+  7. other_relevant_information (USE LAST RESORT ONLY)
+     Factual but fits none of the above: weather tracking, earthquake magnitude, storm path, satellite images, official warnings without impact details, general news/opinions/expressions of solidarity that mention a specific disaster.
+     ⚠ If any specific category above fits, use that instead.
+
+  EDGE-CASE RESOLUTION RULES:
+  - "ศูนย์อพยพวัดศรีทรายมูลกำลังแจกข้าวกล่องและน้ำดื่ม" -> Classify as 'rescue_volunteering_or_donation_effort' (describes relief distribution).
+  - "สะพานขาด รถสัญจรไม่ได้ที่แม่สาย" -> Classify as 'infrastructure_and_utility_damage' (structural damage is primary).
+
+  Call the function 'classify_category' with your decision.
   ```
 
 ---

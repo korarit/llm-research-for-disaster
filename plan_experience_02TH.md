@@ -44,38 +44,58 @@ class TwoLayerClassificationResultTH(BaseModel):
 
 ---
 
-## 4. การออกแบบคำสั่ง (Two-Layer Prompt Design)
+## 4. การออกแบบคำสั่ง (Two-Layer Prompt Design) - นำ Prompt Concept จาก 02E มาปรับใช้
 
-คำสั่งระบบและคำแนะนำสำหรับผู้ใช้งานจะใช้เป็นภาษาอังกฤษถอดแบบมาจากงานวิจัยดั้งเดิม (ref/disaster_classification.ipynb) 100% เพื่อควบคุมตัวแปรในการทดลอง:
+คำสั่งระบบและคำแนะนำสำหรับผู้ใช้งานจะอ้างอิงตาม Prompt Concept ของ **Experiment 02E** โดยเขียนเป็นภาษาอังกฤษเพื่อประสิทธิภาพการประมวลผลสูงสุดและประหยัด Token แต่ได้ทำการปรับปรุง Signal Words และ Edge Cases ให้เหมาะสมกับภาษาไทยเพื่อให้โมเดลสามารถทำงานร่วมกัน 2 เลเยอร์ได้อย่างสมบูรณ์:
 
 ### 4.1 คำสั่งระบบ (System Instruction)
 ```markdown
-You are an expert humanitarian disaster analyst with extensive experience in classifying disaster-related content. Your task is to accurately classify tweets and images based on objective evidence rather than emotional responses.
+You are a humanitarian disaster triage analyst. Your role is to assess social media posts from disaster events and determine BOTH whether they contain disaster-related information AND what type of disaster content they represent.
 ```
 
 ### 4.2 คำสั่งผู้ใช้ (User Prompt Template)
 ```markdown
 Tweet: "{tweet_text}"
 
-CLASSIFICATION CRITERIA:
+Perform a TWO-LAYER classification of this tweet. You must decide BOTH values simultaneously:
 
-STEP 1: Analyze the TWEET TEXT first:
---------------------------------------
-1. Tweet informativeness - determine if the tweet contains SPECIFIC information:
-   - informative: Contains SPECIFIC disaster impact/response evidence, facts, or details
-   - not_informative: Generic statements, emotions only, unrelated content, no specific details
+LAYER 1 — INFORMATIVENESS
+Determine if the tweet contains any information, news, reports, updates, warnings, or discussions related to the disaster or its aftermath:
+- informative: The tweet contains any discussion, weather forecast, warning, news, or reports related to the disaster event or its aftermath. This includes expressions of solidarity or opinions that explicitly mention the disaster.
+- not_informative: Completely off-topic, spam, irrelevant content, or generic personal banter/sentiment (prayers/wishes) that does not refer to the specific disaster at all.
 
-2. Tweet category - identify the DOMINANT content (choose only ONE):
-   - affected_individuals: Mentions displaced people, survivors, emotional responses (NOT injured/dead)
-   - infrastructure_and_utility_damage: References damaged buildings, roads, bridges, utilities
-   - injured_or_dead_people: Reports injuries, deaths, or specific casualty numbers
-   - missing_or_found_people: Mentions people who are missing, found, or rescued by name or count
-   - not_humanitarian: Irrelevant content, ads, jokes, political messages, misinformation
-   - other_relevant_information: Weather data, satellite images, locations without people/damage
-   - rescue_volunteering_or_donation_effort: Mentions donations, rescue missions, aid, volunteers
-   - vehicle_damage: References damaged cars, trucks, ambulances, buses
+LAYER 2 — HUMANITARIAN CATEGORY
+Identify the category that best represents the primary subject of the tweet:
+- injured_or_dead_people: Reports of casualties, deaths, fatalities, or injured people. (Thai signal words: เสียชีวิต, ตาย, เสียชีวิตแล้ว, ผู้เสียชีวิต, พบร่าง, พบศพ, ยอดเสียชีวิต, บาดเจ็บ, ได้รับบาดเจ็บ, เจ็บ, เจ็บสาหัส, บาดเจ็บสาหัส, ส่งโรงพยาบาล, ส่งรพ., รักษาตัวที่โรงพยาบาล, กู้ชีพพบร่าง)
+- missing_or_found_people: Reports of individuals or groups who are missing or have been found/rescued. (Thai signal words: สูญหาย, หายตัว, หาย, สูญหายไป, ตามหา, ค้นหา, ค้นหาผู้สูญหาย, พบตัวแล้ว, เจอแล้ว, พบตัว, ช่วยชีวิตได้แล้ว, ช่วยเหลือได้แล้ว, รอดชีวิต, ปลอดภัยแล้ว, ติดต่อไม่ได้, ยังไม่พบตัว, ขาดการติดต่อ)
+- affected_individuals: Evacuees, displaced people, or survivors (without death or injury). (Thai signal words: อพยพ, ถูกอพยพ, หนีน้ำ, พลัดถิ่น, ไร้ที่อยู่อาศัย, ไร้บ้าน, ศูนย์อพยพ, สถานที่พักพิง, จุดพักพิง, ติดอยู่, ติดค้าง, ออกไม่ได้, ผู้รอดชีวิต, ผู้ประสบภัย, ชาวบ้านเดือดร้อน, บ้านน้ำท่วม)
+- infrastructure_and_utility_damage: Damage to buildings, roads, bridges, power lines, or utilities. (Thai signal words: ถล่ม, ทรุดตัว, พังทลาย, ยุบตัว, พังเสียหาย, ได้รับความเสียหาย, เสียหาย, พัง, ไฟดับ, น้ำประปาไม่ไหล, ไม่มีไฟฟ้า, สัญญาณขาดหาย, น้ำท่วม, ถนนถูกน้ำท่วม, ท่วมถนน, น้ำท่วมขัง, ถนนขาด, ถนนพัง, สะพานขาด, สะพานพัง, เส้นทางชำรุด, เสาไฟล้ม, อาคารถล่ม)
+- vehicle_damage: Damage to cars, trucks, boats, or planes. (Thai signal words: รถจมน้ำ, รถยนต์จมน้ำ, รถพัง, รถยนต์เสียหาย, รถได้รับความเสียหาย, เรือล่ม, เรือพัง, เรืออับปาง, เรือจม, รถไหลไปกับน้ำ, รถโดนพัดไป, รถคว่ำ, รถบรรทุกคว่ำ)
+- rescue_volunteering_or_donation_effort: Relief goods, donations, volunteering, aid distribution, or rescue operations. (Thai signal words: บริจาค, เปิดรับบริจาค, เงินบริจาค, สมทบทุน, ระดมทุน, ร่วมบริจาค, จิตอาสา, อาสาสมัคร, อาสา, ถุงยังชีพ, ข้าวกล่อง, แจกของ, ความช่วยเหลือ, สิ่งของช่วยเหลือ, แจกจ่ายสิ่งของ, หน่วยกู้ภัย, ทีมกู้ภัย, กู้ภัย, กู้ชีพ, ลงพื้นที่ช่วยเหลือ)
+- other_relevant_information: General news, weather forecasts, warnings, comments, political remarks, or opinions about the disaster that do not fit the specific categories above. (Thai signal words: เตือนภัย, ประกาศเตือน, เฝ้าระวัง, แจ้งเตือน, ประกาศจากราชการ, พยากรณ์อากาศ, คาดการณ์, ดินฟ้าอากาศ, ความรุนแรง, ริกเตอร์, ขนาดความแรง, ระดับน้ำ, ปริมาณน้ำฝน, ข่าวภัยพิบัติ, รายงานสถานการณ์, อัพเดทสถานการณ์, อัพเดทน้ำท่วม, ภาพดาวเทียม, เส้นทางพายุ, พายุเข้า)
+- not_humanitarian: Use this ONLY if the tweet is classified as 'not_informative' in Layer 1.
 
-Return classification by calling the specified function.
+CRITICAL DECISION HIERARCHY FOR LAYER 2 (When multiple categories apply, select the highest ranking one):
+1. injured_or_dead_people (Takes top priority if any injury or death is reported)
+2. missing_or_found_people (Takes priority if specific missing/found individuals are mentioned)
+3. affected_individuals (Takes priority over physical damage if displaced/evacuated people are the focus)
+4. infrastructure_and_utility_damage (Takes priority over vehicle damage unless vehicles are the sole focus)
+5. vehicle_damage
+6. rescue_volunteering_or_donation_effort (Takes priority over other_relevant_information if relief/donations are mentioned)
+7. other_relevant_information (Default for informative disaster tweets with no specific damage or casualties)
+8. not_humanitarian (Only when Layer 1 is 'not_informative')
+
+CONSISTENCY RULE:
+- If Layer 1 is 'not_informative', Layer 2 must be 'not_humanitarian'.
+- If Layer 1 is 'informative', Layer 2 must NOT be 'not_humanitarian' (choose one of the other 7 categories instead).
+
+EDGE-CASE RESOLUTION RULES:
+- "ส่งกำลังใจให้ผู้ประสบภัยน้ำท่วมเชียงราย #น้ำท่วมเชียงราย" -> Layer 1: 'informative', Layer 2: 'other_relevant_information' (contains specific disaster keyword).
+- "ขอส่งกำลังใจให้ทุกคนปลอดภัย" -> Layer 1: 'not_informative', Layer 2: 'not_humanitarian' (no specific disaster reference).
+- "ศูนย์อพยพวัดศรีทรายมูลกำลังแจกข้าวกล่องและน้ำดื่ม" -> Layer 1: 'informative', Layer 2: 'rescue_volunteering_or_donation_effort'.
+- "สะพานขาด รถสัญจรไม่ได้ที่แม่สาย" -> Layer 1: 'informative', Layer 2: 'infrastructure_and_utility_damage'.
+
+Return classification by calling the function 'classify_two_layer' with both values.
 ```
 
 ---
