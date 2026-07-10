@@ -29,17 +29,17 @@
 
 ---
 
-## 4. รูปแบบคำสั่งปรับปรุง (Improved Zero-Shot Prompt Design)
+## 4. รูปแบบคำสั่งปรับปรุง (Improved Zero-Shot Prompt Design) - promptV3
 
 โมเดลตอบ **ทั้งสองค่า** (`informativeness` + `category`) ในการเรียก API ครั้งเดียว ผ่าน Function Calling
 
 ### 4.1 คำสั่งระบบ (System Instruction)
-```
+```text
 You are a humanitarian disaster triage analyst. Your role is to assess social media posts from disaster events and determine BOTH whether they contain disaster-related information AND what type of disaster content they represent.
 ```
 
 ### 4.2 คำสั่งผู้ใช้ (User Prompt Template)
-```
+```text
 Tweet: "{tweet_text}"
 
 Perform a TWO-LAYER classification of this tweet. You must decide BOTH values simultaneously:
@@ -47,7 +47,7 @@ Perform a TWO-LAYER classification of this tweet. You must decide BOTH values si
 LAYER 1 — INFORMATIVENESS
 Determine if the tweet contains any information, news, reports, updates, warnings, or discussions related to the disaster or its aftermath:
 - informative: The tweet contains any discussion, weather forecast, warning, news, or reports related to the disaster event or its aftermath. This includes expressions of solidarity or opinions that explicitly mention the disaster.
-- not_informative: Completely off-topic, spam, irrelevant content, or personal banter that does not mention or refer to the disaster at all.
+- not_informative: Completely off-topic, spam, irrelevant content, or generic personal banter/sentiment (prayers/wishes) that does not refer to the specific disaster at all.
 
 LAYER 2 — HUMANITARIAN CATEGORY
 Identify the category that best represents the primary subject of the tweet:
@@ -60,9 +60,25 @@ Identify the category that best represents the primary subject of the tweet:
 - other_relevant_information: General news, weather forecasts, warnings, comments, political remarks, or opinions about the disaster that do not fit the specific categories above. (Signal words: warning, forecast, category, magnitude, news, report)
 - not_humanitarian: Use this ONLY if the tweet is classified as 'not_informative' in Layer 1.
 
+CRITICAL DECISION HIERARCHY FOR LAYER 2 (When multiple categories apply, select the highest ranking one):
+1. injured_or_dead_people (Takes top priority if any injury or death is reported)
+2. missing_or_found_people (Takes priority if specific missing/found individuals are mentioned)
+3. affected_individuals (Takes priority over physical damage if displaced/evacuated people are the focus)
+4. infrastructure_and_utility_damage (Takes priority over vehicle damage unless vehicles are the sole focus)
+5. vehicle_damage
+6. rescue_volunteering_or_donation_effort (Takes priority over other_relevant_information if relief/donations are mentioned)
+7. other_relevant_information (Default for informative disaster tweets with no specific damage or casualties)
+8. not_humanitarian (Only when Layer 1 is 'not_informative')
+
 CONSISTENCY RULE:
 - If Layer 1 is 'not_informative', Layer 2 must be 'not_humanitarian'.
 - If Layer 1 is 'informative', Layer 2 must NOT be 'not_humanitarian' (choose one of the other 7 categories instead).
+
+EDGE-CASE RESOLUTION RULES:
+- "Prayers for Nepal #earthquake" -> Layer 1: 'informative', Layer 2: 'other_relevant_information' (contains specific disaster keyword).
+- "Prayers for everyone" -> Layer 1: 'not_informative', Layer 2: 'not_humanitarian' (no specific disaster reference).
+- "Evacuees are being given food at the shelter" -> Layer 1: 'informative', Layer 2: 'rescue_volunteering_or_donation_effort'.
+- "Bridge collapsed, blocking cars" -> Layer 1: 'informative', Layer 2: 'infrastructure_and_utility_damage'.
 
 Return classification by calling the function 'classify_two_layer' with both values.
 ```
