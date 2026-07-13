@@ -501,6 +501,20 @@ graph TD
 
 การทดลองบนภาษาไทยประเมินบนชุดข้อมูล `CrisisMMD_Thai_1000.csv` จำนวน 1,000 แถว ที่แปลและปรับบริบทให้สอดคล้องกับท้องถิ่นและประโยคโซเชียลมีเดียในประเทศไทย โดยเปรียบเทียบโมเดล MoE 3 รุ่น ได้แก่ `deepseek-v4-flash`, `typhoon-v2.5` และ `gemma-4` ภายใต้สถาปัตยกรรม Flat, Two-Layer Joint และ Sequential 2-Agent ในทุกระดับอุณหภูมิ (T=0.0 - 0.3)
 
+#### 📐 หลักการออกแบบคำสั่ง (Instruction-Style Prompt Design) ตามแนวทาง FLAN
+
+การออกแบบ Prompt สำหรับการทดลองภาษาไทยทั้งสาม (**Exp 1TH, Exp 2TH, Exp 3TH**) อ้างอิงแนวทางการออกแบบคำสั่งแบบ Instruction-Style ที่นิยามโดย Wei et al. (2022) ในงานวิจัย *"Finetuned Language Models Are Zero-Shot Learners"* (FLAN) [14] ซึ่งระบุว่าการแปลงงาน NLP ให้อยู่ในรูปแบบ **Natural Language Instruction** ที่ชัดเจนและสมบูรณ์ ช่วยให้โมเดลภาษาสามารถเข้าใจและตอบสนองต่อคำสั่งใหม่ได้โดยไม่จำเป็นต้องมีการฝึกเพิ่มเติม (Zero-Shot) ซึ่งสอดคล้องกับการนำ Zero-Shot Prompt Learning มาประยุกต์ใช้กับงานจำแนกข้อมูลภัยพิบัติในงานวิจัยนี้
+
+| เทคนิคจาก FLAN (Wei et al., 2022) [14] | ปรากฏใน Exp 1TH | ปรากฏใน Exp 2TH | ปรากฏใน Exp 3TH |
+| :--- | :---: | :---: | :---: |
+| **Task description เป็น Natural Language** — บอก role ของโมเดลและ task ที่ต้องทำอย่างชัดเจนใน system prompt | ✅ | ✅ | ✅ |
+| **Category/Label definitions เป็น Natural Language** — อธิบายนิยามของแต่ละ label แทนการระบุชื่อ label ดิบ | ✅ พร้อม Thai Signal Words | ✅ พร้อม Thai Signal Words | ✅ พร้อม Thai Signal Words |
+| **Instruction บอก Output format ชัดเจน** — ระบุว่าต้องตอบอย่างไร และส่งผลลัพธ์ในรูปแบบใด | ✅ Function Calling (1 output) | ✅ Function Calling (2 outputs พร้อมกัน) | ✅ Function Calling (แยก 2 Agent) |
+| **Decision rules/constraints ฝังใน instruction** — กำหนดลำดับความสำคัญและข้อบังคับในการตัดสินใจ | ✅ Critical Decision Hierarchy | ✅ Critical Decision Hierarchy + Consistency Rule | ✅ Aggressive Bias Rule + Hierarchy |
+| **Concrete examples ใน instruction** — ระบุตัวอย่าง edge-case ที่ชัดเจนพร้อมคำตอบที่ถูกต้อง | ✅ Edge-Case Resolution Rules | ✅ Edge-Case Resolution Rules | ✅ Edge-Case Resolution Rules |
+
+> **หมายเหตุ**: แนวทาง FLAN ใช้เทคนิคเหล่านี้สำหรับ **Fine-tune** โมเดล ขณะที่งานวิจัยนี้นำเทคนิคเดียวกันมาประยุกต์ใช้กับการออกแบบ **Inference Prompt** โดยตรง ซึ่งเป็นแนวทาง **Zero-Shot Prompt Learning** ที่ไม่จำเป็นต้องปรับค่าน้ำหนักโมเดล (Training-Free)
+
 #### 🏆 สรุปสถาปัตยกรรมและโมเดลที่ได้ประสิทธิภาพสูงสุดสำหรับภาษาไทย
 
 1. **หมวดหมู่ความช่วยเหลือย่อย (Category F1-Score)**:
@@ -810,3 +824,7 @@ e:/nlp-for-disaster/
 13. **รายงานการวิจัยและข้อกำหนดทางสถาปัตยกรรมของ Gemma 4 (Gemma 4 MoE Reference):**
     * Google DeepMind. (2026). *Gemma 4 Technical Report*. arXiv preprint arXiv:2607.02770.
     * 👉 ลิงก์เข้าถึงเอกสาร: [https://arxiv.org/abs/2607.02770](https://arxiv.org/abs/2607.02770)
+
+14. **หลักการ Instruction Tuning และการออกแบบคำสั่งแบบ Natural Language (FLAN - Instruction-Style Prompt Design Reference):**
+    * Wei, J., Bosma, M., Zhao, V. Y., Guu, K., Yu, A. W., Lester, B., Du, N., Dai, A. M., & Le, Q. V. (2022). *Finetuned Language Models Are Zero-Shot Learners*. **International Conference on Learning Representations (ICLR)**.
+    * 👉 ลิงก์เข้าถึงเอกสาร: [https://arxiv.org/abs/2109.01652](https://arxiv.org/abs/2109.01652)
