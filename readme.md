@@ -39,15 +39,15 @@
 | :--- | :--- | :--- | :--- |
 | **Exp 1 (Original)** | Flat — 1 Step, 1 Layer | V1 (Original Biased) | รัน Zero-shot ขั้นตอนเดียว (ใช้คำสั่งดั้งเดิมดัดแปลงมาจากเปเปอร์ต้นแบบ [1]) |
 | **Exp 1E (Optimized)** | Flat — 1 Step, 1 Layer | V2 (Optimized) | ถอดคำสั่งเชิงลบและ Negative Constraints ออก (ลด Strictness Bias) |
-| **Exp 1F (Few-Shot)** | Flat — 1 Step, 1 Layer | V2-1 (Few-Shot) | ใช้ Prompt V2 ร่วมกับการใส่ตัวอย่าง Few-shot 6 เหตุการณ์ |
+| **Exp 1E (V3 Hierarchy)** | Flat — 1 Step, 1 Layer | V3 (Hierarchy) | เพิ่ม Critical Decision Hierarchy และ Edge-Case Resolution Rules |
 | **Exp 1E-COT** | Flat — 1 Step, 1 Layer | V2 + Short Reasoning | เพิ่ม Field `short_reasoning` ใน Schema ให้โมเดลอธิบายก่อนตอบ |
 | **Exp 2 (Original)** | Joint — 2 Step, 1 Layer | V1 (Original Biased) | เรียกใช้ API ดึง JSON 2 คีย์ควบคู่กัน (ใช้เกณฑ์ข้อจำกัดจากเปเปอร์ต้นแบบ [1]) |
 | **Exp 2E (Optimized)** | Joint — 2 Step, 1 Layer | V2 (Optimized) | ปรับปรุงคำสั่ง แยกแยะขอบเขตหมวดหมู่ด้วยเกณฑ์เชิงบวก |
-| **Exp 2F (Few-Shot)** | Joint — 2 Step, 1 Layer | V2-1 (Few-Shot) | เพิ่มการจัดโครงสร้างคู่อธิบายระดับความเกี่ยวข้องและหมวดหมู่ย่อยเป็นตัวอย่าง |
+| **Exp 2F (Few-Shot)** | Joint — 2 Step, 1 Layer | V3 (Hierarchy) | เพิ่มการจัดโครงสร้างคู่อธิบายระดับความเกี่ยวข้องและหมวดหมู่ย่อยเป็นตัวอย่าง |
 | **Exp 2E-COT** | Joint — 2 Step, 1 Layer | V2 + Short Reasoning | เพิ่ม Field `short_reasoning` ใน Schema ให้โมเดลอธิบายก่อนตอบ |
 | **Exp 3 (Original)** | Seq — 2 Agent Layer | V1 (Original Biased) | Agent 1 กรอง ➡️ Agent 2 แยกหมวดหมู่ (สถาปัตยกรรมดั้งเดิมตามเปเปอร์ต้นแบบ [1]) |
 | **Exp 3E (Optimized)** | Seq — 2 Agent Layer | V2 (Optimized) | ผ่อนปรนคำสั่งกรองข่าวสารของ Agent 1 ให้มีความครอบคลุมขึ้น |
-| **Exp 3F (Few-Shot)** | Seq — 2 Agent Layer | V2-1 (Few-Shot) | เพิ่มตัวอย่างสำหรับสอนการตัดสินใจของทั้งสองเอเจนต์แยกกัน |
+| **Exp 3F (Few-Shot)** | Seq — 2 Agent Layer | V3 (Hierarchy) | เพิ่มตัวอย่างสำหรับสอนการตัดสินใจของทั้งสองเอเจนต์แยกกัน |
 | **Exp 3E-COT** | Seq — 2 Agent Layer | V2 + Short Reasoning | เพิ่ม Field `short_reasoning` ใน Schema ของทั้ง Agent 1 และ Agent 2 |
 | **Exp 1TH–3TH** | Thai Localization | Thai Translated Prompt | การเทียบเคียงประสิทธิภาพบนข้อความภาษาไทยที่แปลตามบริบทท้องถิ่น |
 | **Exp 4 (NER & Severity)** | Thai NER & Severity | Structured JSON extraction | ระบบปลายทางประมวลผลข้อมูลกู้ภัยภาษาไทย สกัด Entity และระดับความรุนแรง |
@@ -103,7 +103,7 @@ graph LR
     style Out fill:#ffd43b,color:#1a1a1a,stroke:#e67700
 ```
 
-> **หมายเหตุ Error Propagation**: เนื่องจาก Agent 1 และ Agent 2 ทำงานเป็นสายพาน ความผิดพลาดของ Agent 1 จะส่งผ่านไปยัง Agent 2 ทันที (False Negative → ข้อมูลสำคัญถูกทิ้ง / False Positive → ข้อมูลขยะเข้าสู่ Agent 2) นี่คือสาเหตุที่ Prompt V2-1 นำ **Aggressive Bias Rule** มาใช้ใน Agent 1 เพื่อลดโอกาส False Negative
+> **หมายเหตุ Error Propagation**: เนื่องจาก Agent 1 และ Agent 2 ทำงานเป็นสายพาน ความผิดพลาดของ Agent 1 จะส่งผ่านไปยัง Agent 2 ทันที (False Negative → ข้อมูลสำคัญถูกทิ้ง / False Positive → ข้อมูลขยะเข้าสู่ Agent 2) นี่คือสาเหตุที่ Prompt V3 นำ **Aggressive Bias Rule** มาใช้ใน Agent 1 เพื่อลดโอกาส False Negative
 
 ---
 
@@ -181,10 +181,10 @@ graph TD
 * **ข้อพบหลัก**: ผู้วิจัยแก้ปัญหาโดยถอดข้อจำกัดปฏิเสธที่ก้ำกวมออกทั้งหมด (Cognitive Release) และหันมาใช้นิยามเกณฑ์พิจารณาเชิงบวก (Positive Attributes) พร้อมตัวอย่างขอบเขตที่ชัดเจนแทน
 * **ผลกระทบเชิงระบบ**: การออกแบบที่อิงเกณฑ์เชิงบวกนี้สอดคล้องกับระเบียบวิธี Prompt Engineering ที่มีประสิทธิภาพ [7] ช่วยให้โมเดลสามารถ Focus ไปที่ความสัมพันธ์ของคำศัพท์ได้อย่างอิสระ ส่งผลให้ประสิทธิภาพของทุกสถาปัตยกรรมกระโดดขึ้นอย่างมีนัยสำคัญ โดยเฉพาะในระบบ **Two-Layer Joint (Exp 2E)** ที่ส่งผลให้ Typhoon-v2.5 ปลดล็อกประสิทธิภาพขึ้นมาเพิ่มขึ้นกว่า **+23%** ขยับขึ้นไปแตะค่าสูงสุดที่ **`0.6493`** ซึ่งเป็น F1 Category ที่ดีที่สุดในการรันโมเดลเดี่ยว
 
-### 3️⃣ สถาปัตยกรรม V2-1 (V3 Hierarchy): การแก้ไขคอขวดสะสมความผิดพลาด (Error Propagation)
+### 3️⃣ สถาปัตยกรรม V3 (Hierarchy): การแก้ไขคอขวดสะสมความผิดพลาด (Error Propagation)
 * **ข้อพบหลัก**: ในสถาปัตยกรรมแบบสองขั้นตอน (Sequential Agent - Exp 3) หาก Agent 1 (Informativeness) กรองผิดพลาด จะส่งผลให้ข้อขัดข้องตกทอดไปยัง Agent 2 ทันที (Error Propagation)
 * **การแก้ไข**: การทำงานแบบเป็นสายพานนี้มีความเสี่ยงต่อความผิดพลาดสะสมสะท้อนปัญหาที่พบในโครงสร้างแบบ Sequential Prompting [7] ผู้วิจัยจึงได้นำกฎ **Critical Decision Hierarchy** (จัดลำดับสิทธิ์ในการเลือกคลาสกรณีข้อมูลคลุมเครือ) และ **Aggressive Bias Rule** ใน Agent 1 (ให้ปล่อยผ่านข้อมูลภัยพิบัติไปก่อนแม้จะเป็นแค่การแจ้งข่าวทั่วไป หรือส่งกำลังใจ) เข้ามาควบคุมการทำงาน
-* **ผลกระทบเชิงระบบ**: ส่งผลดีให้โมเดล **gemma-4** ในระบบ Sequential (Exp 3E) ขยับขีดความแม่นยำขึ้นจาก `0.5854` (V2) ไปเป็น **`0.6430` (V2-1) (+5.76%)** ซึ่งแสดงให้เห็นว่าการจัดการลำดับขั้นทางตรรกะ [4] สามารถลดผลกระทบของการส่งผ่านความผิดพลาดสะสมได้อย่างมีนัยสำคัญ
+* **ผลกระทบเชิงระบบ**: ส่งผลดีให้โมเดล **gemma-4** ในระบบ Sequential (Exp 3E) ขยับขีดความแม่นยำขึ้นจาก `0.5854` (V2) ไปเป็น **`0.6430` (V3) (+5.76%)** ซึ่งแสดงให้เห็นว่าการจัดการลำดับขั้นทางตรรกะ [4] สามารถลดผลกระทบของการส่งผ่านความผิดพลาดสะสมได้อย่างมีนัยสำคัญ
 
 ### 4️⃣ รายงานการวิเคราะห์การทำกลุ่มโหวตในเวอร์ชัน V3 (Ensemble Voting 2/3)
 ผู้วิจัยทำการรวมกลุ่มทำนายผ่านการโหวตเอาเสียงส่วนใหญ่ 2 ใน 3 (Majority Vote) จากทั้ง 3 โมเดล สอดคล้องกับหลักการ Self-Consistency [5] และได้รับข้อสรุปเชิงประจักษ์ดังนี้:
@@ -204,7 +204,7 @@ graph TD
 | **BERT-base (Text-only)** [10] | Supervised (Fine-tuned) | 0.8120 - 0.8420 | **0.7686 - 0.7830** |
 | **CNN Baseline (Text-only)** [10] | Supervised (Fine-tuned) | 0.7910 | 0.6900 - 0.7240 |
 | **Typhoon-v2.5 (Exp 2E - V2)** *(งานวิจัยนี้)* | **Zero-Shot** Joint | **0.9070** 🚀 | 0.6493 |
-| **Gemma-4 (Exp 3E - V2-1)** *(งานวิจัยนี้)* | **Few-Shot** Sequential Agent | 0.8199 | 0.6430 |
+| **Gemma-4 (Exp 3E - V3)** *(งานวิจัยนี้)* | **Few-Shot** Sequential Agent | 0.8199 | 0.6430 |
 | **Ensemble Vote 2/3 (Exp 1E)** *(งานวิจัยนี้)* | **Zero-Shot** Ensemble Flat | 0.8966 | 0.6354 |
 
 * **บทวิเคราะห์ผลลัพธ์เปรียบเทียบเชิงลึก**:
@@ -223,7 +223,7 @@ graph TD
 > **คำอธิบายสถาปัตยกรรม**: **Flat** = 1 Step 1 Layer (API Call เดียว จำแนกพร้อมกัน) | **Joint** = 2 Step 1 Layer (API Call เดียว JSON 2 คีย์) | **Seq** = 2 Agent Layer (2 API Calls: Agent 1 กรอง → Agent 2 จำแนก)
 
 ##### 1. โมเดล: deepseek-v4-flash
-| สถาปัตยกรรม (Architecture) | Temp | V1 (Original Biased) | V2 (Optimized) | V2-1 (Few-Shot) | COT (Short Reasoning) | ผลลัพธ์พัฒนาการ (V1 ➡️ COT) |
+| สถาปัตยกรรม (Architecture) | Temp | V1 (Original Biased) | V2 (Optimized) | V3 (Hierarchy) | COT (Short Reasoning) | ผลลัพธ์พัฒนาการ (V1 ➡️ COT) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Flat** (Exp 1, 1E, 1F) | 0.0 | 0.5631 | 0.6192 | 0.6109 | 0.6014 | **+3.83%** |
 | | 0.1 | 0.5506 | 0.5915 | 0.6096 | 0.5989 | **+4.83%** |
@@ -239,7 +239,7 @@ graph TD
 | | 0.3 | 0.5612 | 0.5752 | 0.5991 | **0.6096** | **+4.84%** |
 
 ##### 2. โมเดล: gemma-4
-| สถาปัตยกรรม (Architecture) | Temp | V1 (Original Biased) | V2 (Optimized) | V2-1 (Few-Shot) | COT (Short Reasoning) | ผลลัพธ์พัฒนาการ (V1 ➡️ COT) |
+| สถาปัตยกรรม (Architecture) | Temp | V1 (Original Biased) | V2 (Optimized) | V3 (Hierarchy) | COT (Short Reasoning) | ผลลัพธ์พัฒนาการ (V1 ➡️ COT) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Flat** (Exp 1, 1E, 1F) | 0.0 | 0.5379 | 0.6234 | **0.6394** | 0.6238 | **+10.15%** 🚀 |
 | | 0.1 | 0.5316 | 0.6228 | **0.6280** | 0.6207 | **+8.91%** |
@@ -255,7 +255,7 @@ graph TD
 | | 0.3 | 0.5725 | 0.5870 | **0.6427** | 0.6382 | **+6.57%** |
 
 ##### 3. โมเดล: typhoon-v2.5
-| สถาปัตยกรรม (Architecture) | Temp | V1 (Original Biased) | V2 (Optimized) | V2-1 (Few-Shot) | COT (Short Reasoning) | ผลลัพธ์พัฒนาการ (V1 ➡️ COT) |
+| สถาปัตยกรรม (Architecture) | Temp | V1 (Original Biased) | V2 (Optimized) | V3 (Hierarchy) | COT (Short Reasoning) | ผลลัพธ์พัฒนาการ (V1 ➡️ COT) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Flat** (Exp 1, 1E, 1F) | 0.0 | 0.5749 | 0.6125 | 0.5910 | **0.6166** | **+4.17%** |
 | | 0.1 | 0.5658 | 0.6197 | 0.5922 | **0.6246** | **+5.88%** 🚀 *(Best Typhoon Flat)* |
@@ -308,7 +308,7 @@ graph TD
 
 ##### 1. กลุ่ม Flat Architecture (Exp 1E vs. Exp 1)
 การลดทอนกฎข้อห้ามที่กำกวม (Strictness Bias) ในเวอร์ชัน V2 ช่วยลดความยาวของ Prompt ส่งผลให้ปริมาณโทเค็นลดลงเกือบครึ่งหนึ่ง (~40% - 48%) เมื่อเทียบกับเวอร์ชัน V1:
-| Model | Temp | V1 (Original Biased / Old Prompt) | V2 (Optimized) | V2-1 (V3 Hierarchy) | ผลต่างสุทธิ (V1 ➡️ V2-1) |
+| Model | Temp | V1 (Original Biased / Old Prompt) | V2 (Optimized) | V3 (Hierarchy) | ผลต่างสุทธิ (V1 ➡️ V3) |
 |---|:---:|:---:|:---:|:---:|:---:|
 | **deepseek-v4-flash** | 0.0 | 1,404 | 805 | 1,169 | **-16.74%** |
 | | 0.1 | 1,407 | 800 | 1,169 | **-16.95%** |
@@ -324,8 +324,8 @@ graph TD
 | | 0.3 | 1,164 | 602 | 959 | **-17.64%** |
 
 ##### 2. กลุ่ม Two-Layer Joint Architecture (Exp 2E vs. Exp 2)
-การปรับปรุงเป็น V2 Joint ช่วยประหยัดโทเค็นเนื่องจากโครงสร้างคำสั่งกระชับขึ้น ขณะที่เวอร์ชัน V2-1 ขยับโทเค็นสูงขึ้น (+12% ถึง +18%) เนื่องจากมีการเพิ่มเงื่อนไขควบคุมที่ซับซ้อนในฝั่ง Prompt Input เช่น **Critical Decision Hierarchy** และ **Edge-Case Resolution Rules** เพื่อเพิ่มความแม่นยำในการคัดแยก:
-| Model | Temp | V1 (Original Biased / Old Prompt) | V2 (Optimized) | V2-1 (V3 Hierarchy) | ผลต่างสุทธิ (V1 ➡️ V2-1) |
+การปรับปรุงเป็น V2 Joint ช่วยประหยัดโทเค็นเนื่องจากโครงสร้างคำสั่งกระชับขึ้น ขณะที่เวอร์ชัน V3 ขยับโทเค็นสูงขึ้น (+12% ถึง +18%) เนื่องจากมีการเพิ่มเงื่อนไขควบคุมที่ซับซ้อนในฝั่ง Prompt Input เช่น **Critical Decision Hierarchy** และ **Edge-Case Resolution Rules** เพื่อเพิ่มความแม่นยำในการคัดแยก:
+| Model | Temp | V1 (Original Biased / Old Prompt) | V2 (Optimized) | V3 (Hierarchy) | ผลต่างสุทธิ (V1 ➡️ V3) |
 |---|:---:|:---:|:---:|:---:|:---:|
 | **deepseek-v4-flash** | 0.0 | 1,253 | 1,052 | 1,409 | **+12.45%** ⚠️ |
 | | 0.1 | 1,253 | 1,052 | 1,409 | **+12.47%** ⚠️ |
@@ -341,8 +341,8 @@ graph TD
 | | 0.3 | 1,009 | 844 | 1,191 | **+18.05%** ⚠️ |
 
 ##### 3. กลุ่ม Sequential 2-Agent Architecture (Exp 3E vs. Exp 3)
-ในสถาปัตยกรรมแบบสองขั้นตอน เวอร์ชัน V2-1 มีการส่งผ่านข้อมูลที่ต้องเพิ่มคำอธิบายของกฎข้อบังคับและลำดับความสำคัญใน Prompt Input ของทั้งสองเอเจนต์ ส่งผลให้เกิดปริมาณโทเค็นสะสมฝั่ง Input ขยายตัวขึ้นอย่างชัดเจน (+12% ถึง +31%):
-| Model | Temp | V1 (Original Biased / Old Prompt) | V2 (Optimized) | V2-1 (V3 Hierarchy) | ผลต่างสุทธิ (V1 ➡️ V2-1) |
+ในสถาปัตยกรรมแบบสองขั้นตอน เวอร์ชัน V3 มีการส่งผ่านข้อมูลที่ต้องเพิ่มคำอธิบายของกฎข้อบังคับและลำดับความสำคัญใน Prompt Input ของทั้งสองเอเจนต์ ส่งผลให้เกิดปริมาณโทเค็นสะสมฝั่ง Input ขยายตัวขึ้นอย่างชัดเจน (+12% ถึง +31%):
+| Model | Temp | V1 (Original Biased / Old Prompt) | V2 (Optimized) | V3 (Hierarchy) | ผลต่างสุทธิ (V1 ➡️ V3) |
 |---|:---:|:---:|:---:|:---:|:---:|
 | **deepseek-v4-flash** | 0.0 | 1,354 | 1,338 | 1,550 | **+14.43%** ⚠️ |
 | | 0.1 | 1,373 | 1,354 | 1,550 | **+12.85%** ⚠️ |
@@ -359,16 +359,16 @@ graph TD
 
 ---
 
-#### 🧠 ตารางเปรียบเทียบผลลัพธ์ COT (Short Reasoning) เทียบกับ V2-1 Zero-Shot
+#### 🧠 ตารางเปรียบเทียบผลลัพธ์ COT (Short Reasoning) เทียบกับ V3 Zero-Shot
 
-การทดลองรอบนี้นำเทคนิค **Chain-of-Thought แบบย่อ (Short Reasoning)** มาบังคับฝังในโครงสร้าง Function Calling Schema ผ่านฟิลด์ `short_reasoning` (บังคับให้โมเดลเขียนเบาะแสอธิบาย **1-2 ประโยค** ก่อนส่งคำตอบ) เปรียบเทียบกับผลการรัน Zero-Shot แบบ V2-1 เดิม เพื่อทดสอบว่าการเพิ่ม Reasoning ขั้นต้นในช่องทาง Output จะช่วยยกระดับความแม่นยำได้หรือไม่ โดยไม่กระทบ Token Budget มากนัก:
+การทดลองรอบนี้นำเทคนิค **Chain-of-Thought แบบย่อ (Short Reasoning)** มาบังคับฝังในโครงสร้าง Function Calling Schema ผ่านฟิลด์ `short_reasoning` (บังคับให้โมเดลเขียนเบาะแสอธิบาย **1-2 ประโยค** ก่อนส่งคำตอบ) เปรียบเทียบกับผลการรัน Zero-Shot แบบ V3 เดิม เพื่อทดสอบว่าการเพิ่ม Reasoning ขั้นต้นในช่องทาง Output จะช่วยยกระดับความแม่นยำได้หรือไม่ โดยไม่กระทบ Token Budget มากนัก:
 
-##### 🔵 ตาราง Informativeness F1 เปรียบเทียบทุกเวอร์ชัน (V1 → V2 → V2-1 → COT)
+##### 🔵 ตาราง Informativeness F1 เปรียบเทียบทุกเวอร์ชัน (V1 → V2 → V3 → COT)
 
 ตาราง Informativeness F1 แสดงความสามารถของแต่ละโมเดลและสถาปัตยกรรมในการแยกแยะทวีตที่มีข้อมูลเกี่ยวกับภัยพิบัติจริง (Informative) ออกจากทวีตที่ไม่เกี่ยวข้อง (Not Informative) เปรียบเทียบกับโมเดลที่ผ่านการฝึกฝนแบบมีผู้สอน (Supervised Baselines) จาก Ofli et al. (2020) [10]:
 
 ###### 🏗️ Flat Architecture (Exp 1E)
-| Model | Temp | V1 | V2 | V2-1 | COT | Δ (V1→COT) |
+| Model | Temp | V1 | V2 | V3 | COT | Δ (V1→COT) |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **deepseek-v4-flash** | 0.0 | 0.8029 | 0.8875 | 0.8830 | 0.8706 | **+0.0677** |
 | | 0.1 | 0.7876 | 0.8809 | 0.8813 | 0.8514 | **+0.0638** |
@@ -387,7 +387,7 @@ graph TD
 | **CNN** [10] | — | 0.7910 | — | — | — | *Fine-tuned* |
 
 ###### 🔗 Two-Layer Joint Architecture (Exp 2E)
-| Model | Temp | V1 | V2 | V2-1 | COT | Δ (V1→COT) |
+| Model | Temp | V1 | V2 | V3 | COT | Δ (V1→COT) |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **deepseek-v4-flash** | 0.0 | 0.6599 | 0.8881 | 0.8971 | 0.8943 | **+0.2344** 🔥 |
 | | 0.1 | 0.6745 | 0.8919 | 0.8999 | 0.8797 | **+0.2052** 🔥 |
@@ -406,7 +406,7 @@ graph TD
 | **CNN** [10] | — | 0.7910 | — | — | — | *Fine-tuned* |
 
 ###### ⛓️ Sequential 2-Agent Architecture (Exp 3E)
-| Model | Temp | V1 | V2 | V2-1 | COT | Δ (V1→COT) |
+| Model | Temp | V1 | V2 | V3 | COT | Δ (V1→COT) |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **deepseek-v4-flash** | 0.0 | 0.8354 | 0.8247 | 0.8722 | 0.8668 | **+0.0314** |
 | | 0.1 | 0.8243 | 0.8405 | 0.8696 | 0.8863 | **+0.0620** |
@@ -426,16 +426,16 @@ graph TD
 
 > **หมายเหตุ Supervised Baseline**: ค่าจาก Ofli et al. (2020) [10] ไม่แยกรายงานตาม Architecture หรือ Temp จึงแสดงซ้ำในทุกตาราง ช่วง `0.8120–0.8420` ครอบคลุมผลจากหลายชุดข้อมูลย่อยของ CrisisMMD [2]
 
-> **บทสรุป Informativeness F1**: ระบบ MoE LLMs ของเราในเวอร์ชัน V2 และ V2-1 **เอาชนะ BERT-base Supervised ได้** ด้วย Informativeness F1 สูงสุดถึง `0.9070` (Typhoon Joint V2) เทียบกับ BERT-base ที่ `0.8120–0.8420` [10] ก้าวกระโดดใน V1 → V2 เกิดจากการแก้ปัญหา Strictness Bias ในคำสั่งกรองข่าวสาร และ V2-1 แก้คอขวด Sequential ด้วย Bias Rule ใน Agent 1 COT มีผลบวกต่อ Typhoon-v2.5 ใน Sequential (+0.04) ก้าวกระโดดครั้งใหญ่ที่สุดเกิดขึ้นใน **V2 (Optimized)** ซึ่งแก้ปัญหา Strictness Bias ในคำสั่งฝั่งกรองข่าวสาร และ **V2-1** ที่แก้ปัญหาคอขวด Error Propagation ใน Sequential โดยการเพิ่ม Bias Rule ใน Agent 1 COT มีผลบวกต่อ Sequential ของ Typhoon-v2.5 อย่างชัดเจน (+0.04) แต่ผลรวมโดยทั่วไปแทบไม่ต่างจาก V2-1
+> **บทสรุป Informativeness F1**: ระบบ MoE LLMs ของเราในเวอร์ชัน V2 และ V3 **เอาชนะ BERT-base Supervised ได้** ด้วย Informativeness F1 สูงสุดถึง `0.9070` (Typhoon Joint V2) เทียบกับ BERT-base ที่ `0.8120–0.8420` [10] ก้าวกระโดดใน V1 → V2 เกิดจากการแก้ปัญหา Strictness Bias ในคำสั่งกรองข่าวสาร และ V3 แก้คอขวด Sequential ด้วย Bias Rule ใน Agent 1 COT มีผลบวกต่อ Typhoon-v2.5 ใน Sequential (+0.04) ก้าวกระโดดครั้งใหญ่ที่สุดเกิดขึ้นใน **V2 (Optimized)** ซึ่งแก้ปัญหา Strictness Bias ในคำสั่งฝั่งกรองข่าวสาร และ **V3** ที่แก้ปัญหาคอขวด Error Propagation ใน Sequential โดยการเพิ่ม Bias Rule ใน Agent 1 COT มีผลบวกต่อ Sequential ของ Typhoon-v2.5 อย่างชัดเจน (+0.04) แต่ผลรวมโดยทั่วไปแทบไม่ต่างจาก V3
 
 ---
 
-##### 🔴 ตาราง Category F1 เปรียบเทียบทุกเวอร์ชัน (V1 → V2 → V2-1 → COT)
+##### 🔴 ตาราง Category F1 เปรียบเทียบทุกเวอร์ชัน (V1 → V2 → V3 → COT)
 
 ตาราง Category F1 แสดงความสามารถในการจัดหมวดหมู่ประเภทความช่วยเหลือด้านมนุษยธรรมที่ถูกต้อง (เช่น Affected Individuals, Rescue, Infrastructure Damage) ซึ่งเป็นงานที่ซับซ้อนและท้าทายที่สุดในระบบ:
 
 ###### 🏗️ Flat Architecture (Exp 1E)
-| Model | Temp | V1 | V2 | V2-1 | COT | Δ (V1→COT) |
+| Model | Temp | V1 | V2 | V3 | COT | Δ (V1→COT) |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **deepseek-v4-flash** | 0.0 | 0.5631 | 0.6192 | 0.6109 | 0.6014 | **+0.0383** |
 | | 0.1 | 0.5506 | 0.5915 | 0.6096 | 0.5989 | **+0.0483** |
@@ -454,7 +454,7 @@ graph TD
 | **CNN** [10] | — | 0.6900–0.7240 | — | — | — | *Fine-tuned* |
 
 ###### 🔗 Two-Layer Joint Architecture (Exp 2E)
-| Model | Temp | V1 | V2 | V2-1 | COT | Δ (V1→COT) |
+| Model | Temp | V1 | V2 | V3 | COT | Δ (V1→COT) |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **deepseek-v4-flash** | 0.0 | 0.4714 | 0.6081 | 0.6223 | **0.6432** | **+0.1718** 🔥 *(Best DeepSeek)* |
 | | 0.1 | 0.4868 | 0.6065 | 0.6145 | 0.6019 | **+0.1151** |
@@ -473,7 +473,7 @@ graph TD
 | **CNN** [10] | — | 0.6900–0.7240 | — | — | — | *Fine-tuned* |
 
 ###### ⛓️ Sequential 2-Agent Architecture (Exp 3E)
-| Model | Temp | V1 | V2 | V2-1 | COT | Δ (V1→COT) |
+| Model | Temp | V1 | V2 | V3 | COT | Δ (V1→COT) |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **deepseek-v4-flash** | 0.0 | 0.5571 | 0.5609 | 0.6093 | 0.5958 | **+0.0387** |
 | | 0.1 | 0.5139 | 0.5772 | 0.6070 | **0.6143** | **+0.1004** 🚀 |
@@ -612,34 +612,34 @@ graph TD
 #### 1. ตารางเปรียบเทียบค่าเฉลี่ยหมวดหมู่ช่วยเหลือภัยพิบัติย่อย (Category F1-Score Averages)
 แสดงค่าเฉลี่ยความแม่นยำในการคัดแยกความช่วยเหลือย่อย (เช่น Affected Individuals, Rescue, Infrastructure Damage):
 
-| สถาปัตยกรรม (Architecture) | โมเดล (Model) | English Dataset Avg (Optimized)* | Thai Dataset Avg | ผลต่างข้ามภาษา (Diff TH - EN) |
+| สถาปัตยกรรม (Architecture) | โมเดล (Model) | English Dataset Avg (V3 Hierarchy)* | Thai Dataset Avg (V3 Hierarchy) | ผลต่างข้ามภาษา (Diff TH - EN) |
 | :--- | :--- | :---: | :---: | :---: |
-| **Flat** | deepseek-v4-flash | 0.6038 (V2) | 0.7494 | **+0.1456** |
-| | gemma-4 | 0.6251 (V2) | 0.7541 | **+0.1290** |
-| | typhoon-v2.5 | 0.6179 (V2) | 0.6855 | **+0.0676** |
-| **Two-Layer Joint** | deepseek-v4-flash | 0.6065 (V2) | 0.7255 | **+0.1190** |
-| | gemma-4 | 0.6014 (V2) | 0.7151 | **+0.1137** |
-| | typhoon-v2.5 | 0.6442 (V2) | 0.6954 | **+0.0512** |
-| **Sequential 2-Agent** | deepseek-v4-flash | 0.5702 (V2) | 0.7558 | **+0.1856** |
-| | gemma-4 | 0.5811 (V2) | 0.7111 | **+0.1300** |
-| | typhoon-v2.5 | 0.5659 (V2) | 0.7377 | **+0.1718** |
+| **Flat** | deepseek-v4-flash | 0.6086 (V3) | 0.7494 | **+0.1408** |
+| | gemma-4 | 0.6302 (V3) | 0.7541 | **+0.1239** |
+| | typhoon-v2.5 | 0.5900 (V3) | 0.6855 | **+0.0955** |
+| **Two-Layer Joint** | deepseek-v4-flash | 0.6191 (V3) | 0.7255 | **+0.1064** |
+| | gemma-4 | 0.6123 (V3) | 0.7151 | **+0.1028** |
+| | typhoon-v2.5 | 0.6241 (V3) | 0.6954 | **+0.0713** |
+| **Sequential 2-Agent** | deepseek-v4-flash | 0.6034 (V3) | 0.7558 | **+0.1524** |
+| | gemma-4 | 0.6409 (V3) | 0.7111 | **+0.0702** |
+| | typhoon-v2.5 | 0.5984 (V3) | 0.7377 | **+0.1393** |
 
 #### 2. ตารางเปรียบเทียบค่าเฉลี่ยความเกี่ยวข้องกับภัยพิบัติ (Informativeness F1-Score Averages)
 แสดงค่าเฉลี่ยความแม่นยำในการคัดกรองว่าข้อความใดเกี่ยวข้องกับภัยพิบัติ (Informativeness Gate):
 
-| สถาปัตยกรรม (Architecture) | โมเดล (Model) | English Dataset Avg (Optimized)* | Thai Dataset Avg | ผลต่างข้ามภาษา (Diff TH - EN) |
+| สถาปัตยกรรม (Architecture) | โมเดล (Model) | English Dataset Avg (V3 Hierarchy)* | Thai Dataset Avg (V3 Hierarchy) | ผลต่างข้ามภาษา (Diff TH - EN) |
 | :--- | :--- | :---: | :---: | :---: |
-| **Flat** | deepseek-v4-flash | 0.8807 (V2) | 0.9126 | **+0.0319** |
-| | gemma-4 | 0.8950 (V2) | 0.9104 | **+0.0154** |
-| | typhoon-v2.5 | 0.8982 (V2) | 0.8969 | **-0.0013** |
-| **Two-Layer Joint** | deepseek-v4-flash | 0.8920 (V2) | 0.9062 | **+0.0142** |
-| | gemma-4 | 0.8990 (V2) | 0.9025 | **+0.0035** |
-| | typhoon-v2.5 | 0.9029 (V2) | 0.9031 | **+0.0002** |
-| **Sequential 2-Agent** | deepseek-v4-flash | 0.8336 (V2) | 0.9075 | **+0.0739** |
-| | gemma-4 | 0.8175 (V2) | 0.9010 | **+0.0835** |
-| | typhoon-v2.5 | 0.8271 (V2) | 0.9108 | **+0.0837** |
+| **Flat** | deepseek-v4-flash | 0.8831 (V3) | 0.9126 | **+0.0295** |
+| | gemma-4 | 0.8767 (V3) | 0.9104 | **+0.0337** |
+| | typhoon-v2.5 | 0.8923 (V3) | 0.8969 | **+0.0046** |
+| **Two-Layer Joint** | deepseek-v4-flash | 0.8969 (V3) | 0.9062 | **+0.0093** |
+| | gemma-4 | 0.8991 (V3) | 0.9025 | **+0.0034** |
+| | typhoon-v2.5 | 0.9014 (V3) | 0.9031 | **+0.0017** |
+| **Sequential 2-Agent** | deepseek-v4-flash | 0.8709 (V3) | 0.9075 | **+0.0366** |
+| | gemma-4 | 0.9026 (V3) | 0.9010 | **-0.0016** |
+| | typhoon-v2.5 | 0.8505 (V3) | 0.9108 | **+0.0603** |
 
-*\*หมายเหตุ: สำหรับชุดข้อมูลภาษาอังกฤษ ค่าเฉลี่ยจะคำนวณจากเวอร์ชันประเมินผลหลักแบบ Zero-Shot (Optimized - V2) ในทุกสถาปัตยกรรม เพื่อเปรียบเทียบกับชุดข้อมูลภาษาไทยที่เป็นระบบแบบ Zero-Shot ได้อย่างตรงประเด็นและมีความเที่ยงตรงทางวิทยาศาสตร์ในการเปรียบเทียบประสิทธิภาพข้ามภาษา*
+*\*หมายเหตุ: สำหรับชุดข้อมูลทั้งภาษาอังกฤษและภาษาไทย ค่าเฉลี่ยจะคำนวณจากเวอร์ชันประเมินผลแบบ Zero-Shot ด้วยโครงสร้างตรรกะแบบลำดับขั้นความสำคัญ (V3 Hierarchy - หรือที่บางรายงานเขียนรหัสกำกับ V2-1) ในทุกสถาปัตยกรรม เพื่อให้เป็นตรรกะและโครงสร้างคำสั่งแบบเดียวกัน (Like-with-Like) ทำให้การประเมินผลต่างข้ามภาษามีความเที่ยงตรงสูงที่สุด*
 
 ---
 
@@ -653,11 +653,11 @@ graph TD
    * **การกำหนดค่า**: ใช้โมเดล **`typhoon-v2.5`** ตัวเดี่ยวบนสถาปัตยกรรม **Two-Layer Joint (Exp 2E)** กำหนดระดับอุณหภูมิ **`Temp = 0.2`** และใช้ Prompt เวอร์ชัน **V2 (Optimized)**
    * **เหตุผล**: ทำคะแนนสูงสุดได้ถึง **`0.6493` F1 Category** และประหยัดค่าใช้จ่ายโทเค็นลงถึง 3 เท่าตัวเมื่อเทียบกับการทำ Ensemble
 2. **สำหรับสถาปัตยกรรมที่มีลำดับการทำงานซับซ้อน (Best Sequential Architecture)**:
-   * **การกำหนดค่า**: ใช้โมเดล **`gemma-4`** บนสถาปัตยกรรม **Sequential (Exp 3E)** กำหนดระดับอุณหภูมิ **`Temp = 0.1`** และใช้ Prompt เวอร์ชัน **V2-1**
+   * **การกำหนดค่า**: ใช้โมเดล **`gemma-4`** บนสถาปัตยกรรม **Sequential (Exp 3E)** กำหนดระดับอุณหภูมิ **`Temp = 0.1`** และใช้ Prompt เวอร์ชัน **V3**
    * **เหตุผล**: ให้ค่า F1 Category สูงถึง **`0.6430`** จากประสิทธิภาพของโครงสร้างการสั่งการแบบลำดับความสำคัญในการตัดสินใจที่ช่วยอุดรอยรั่วของการส่งต่อข้อผิดพลาด (Error Propagation)
 3. **สำหรับการยกระดับความแม่นยำด้วย COT (Best COT Configuration)**:
    * **การกำหนดค่า**: ใช้โมเดล **`gemma-4`** บนสถาปัตยกรรม **Sequential (Exp 3E-COT)** กำหนดระดับอุณหภูมิ **`Temp = 0.1`** และใช้ Short Reasoning Schema
-   * **เหตุผล**: ยกระดับ F1 Category ขึ้นไปแตะสถิติสูงสุดของงานวิจัยทั้งหมดที่ **`0.6465`** (+0.0035 เทียบกับ V2-1 Zero-Shot) ด้วยต้นทุนโทเค็นเพิ่มขึ้นเพียงเล็กน้อยจากฟิลด์ `short_reasoning`
+   * **เหตุผล**: ยกระดับ F1 Category ขึ้นไปแตะสถิติสูงสุดของงานวิจัยทั้งหมดที่ **`0.6465`** (+0.0035 เทียบกับ V3 Zero-Shot) ด้วยต้นทุนโทเค็นเพิ่มขึ้นเพียงเล็กน้อยจากฟิลด์ `short_reasoning`
 
 ### 7.2 ข้อเสนอแนะสำหรับชุดข้อมูลภาษาไทย (Thai Dataset Recommendations)
 
@@ -733,20 +733,20 @@ e:/nlp-for-disaster/
 ├── dataset/             <- ชุดข้อมูลตั้งต้น (CrisisMMD) และสคริปต์ทำความสะอาดคัดเลือก
 ├── exp1/                <- สคริปต์และผลลัพธ์วิเคราะห์เวอร์ชัน V1 Flat (มี Strictness Bias)
 ├── exp1E/               <- สคริปต์และผลลัพธ์เวอร์ชัน V2 Flat Zero-Shot (Optimized)
-├── exp1F/               <- สคริปต์และผลลัพธ์เวอร์ชัน V2-1 Flat Few-Shot (6 เหตุการณ์)
+├── exp1F/               <- สคริปต์เวอร์ชัน Few-Shot Flat (ไม่มีในชุดผลลัพธ์หลัก)
 ├── exp1th/              <- สคริปต์และผลลัพธ์การทดลองแบบ Flat บนภาษาไทย (Exp 1TH)
 ├── exp2/                <- สคริปต์และผลลัพธ์เวอร์ชัน V1 Two-Layer Joint (มี Strictness Bias)
 ├── exp2E/               <- สคริปต์และผลลัพธ์เวอร์ชัน V2 Two-Layer Joint Zero-Shot (Optimized)
-├── exp2F/               <- สคริปต์และผลลัพธ์เวอร์ชัน V2-1 Two-Layer Joint Few-Shot
+├── exp2F/               <- สคริปต์เวอร์ชัน Few-Shot Two-Layer Joint (ไม่มีในชุดผลลัพธ์หลัก)
 ├── exp2th/              <- สคริปต์และผลลัพธ์การทดลองแบบ Two-Layer Joint บนภาษาไทย (Exp 2TH)
 ├── exp3E/               <- สคริปต์และผลลัพธ์เวอร์ชัน V2 Sequential Agent Zero-Shot (Optimized)
-├── exp3F/               <- สคริปต์และผลลัพธ์เวอร์ชัน V2-1 Sequential Agent Few-Shot
+├── exp3F/               <- สคริปต์เวอร์ชัน Few-Shot Sequential Agent (ไม่มีในชุดผลลัพธ์หลัก)
 ├── exp3th/              <- สคริปต์และผลลัพธ์การทดลองแบบ Sequential 2-Agent บนภาษาไทย (Exp 3TH)
 ├── exp4/                <- โฟลเดอร์งานวิจัยระบบสกัดข้อมูลภัยพิบัติไทยความรุนแรงและ NER
 ├── exp4th/              <- โฟลเดอร์การรันทดสอบโมเดลในการจำแนกระดับความรุนแรงและสกัด Entity ภาษาไทย (Exp 4TH)
 ├── reportV1/            <- เอกสารสรุปผลการทดลองและการทำงานในเวอร์ชันที่ 1 (V1)
 ├── reportV2/            <- รายงานเปรียบเทียบผลลัพธ์เชิงวิเคราะห์คำสั่งจูนระบบ (V2)
-├── reportV2-1/          <- สรุปผลการนำลำดับขั้นความสำคัญ (Hierarchy) มาปรับใช้ (V2-1)
+├── reportV2-1/          <- สรุปผลการนำลำดับขั้นความสำคัญ (Hierarchy) มาปรับใช้ (V3)
 ├── reportV3/            <- สคริปต์และรายงานวิเคราะห์ความสอดคล้องและการทำ Ensemble Voting
 ├── reportV4/            <- รายงานสรุปผลการทดลองภัยพิบัติภาษาไทยทั้งหมด (Flat vs Joint vs Seq 2-Agent)
 ├── readme.md            <- เอกสารสรุปโครงการและผลลัพธ์การทดลองวิจัย (ภาษาไทย)
