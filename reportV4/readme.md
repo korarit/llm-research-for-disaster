@@ -19,6 +19,8 @@
    - [รายงานสรุปของ Exp 3TH](file:///e:/nlp-for-disaster/reportV4/exp3th/summary.md)
    - [ตารางเปรียบเทียบรวมทั้ง 3 สถาปัตยกรรม](file:///e:/nlp-for-disaster/reportV4/exp3th/th_exp3_vs_other_comparison.csv)
 
+📝 **[รายงานวิเคราะห์เหตุผลที่ภาษาไทยชนะภาษาอังกฤษ (why_th_better_en.md)](file:///e:/nlp-for-disaster/reportV4/why_th_better_en.md)**
+
 ---
 
 ## 🏆 โมเดลและสถาปัตยกรรมที่ได้ประสิทธิภาพดีที่สุด (Best Performance)
