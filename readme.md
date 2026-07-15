@@ -204,7 +204,7 @@ graph TD
 | **CNN Baseline (Text-only)** [10] | Supervised (Fine-tuned) | 0.8090 | **0.6770** |
 | **Typhoon-v2.5 (Exp 2E - V2)** *(งานวิจัยนี้)* | **Zero-Shot** Joint | **0.9070** 🚀 | 0.6493 |
 | **DeepSeek-v4-flash (Exp 2E - COT)** *(งานวิจัยนี้)* | **Zero-Shot** Joint + COT | 0.8943 | 0.6432 |
-| **Gemma-4 (Exp 3E - V3)** *(งานวิจัยนี้)* | **Few-Shot** Sequential Agent | 0.8199 | 0.6430 |
+| **Gemma-4 (Exp 3F - V3)** *(งานวิจัยนี้)* | **Few-Shot** Sequential Agent | 0.9023 | 0.6430 |
 | **Ensemble Vote 2/3 (Exp 1E)** *(งานวิจัยนี้)* | **Zero-Shot** Ensemble Flat | 0.8966 | 0.6354 |
 
 * **บทวิเคราะห์ผลลัพธ์เปรียบเทียบเชิงลึก**:
