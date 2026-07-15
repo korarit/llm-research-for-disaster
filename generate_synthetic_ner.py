@@ -9,12 +9,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 load_dotenv()
 
-PREFIXES = ["นาย", "นาง", "นางสาว", "คุณ", "พี่", "น้อง", "ลุง", "ป้า", "ยาย", "ตา", "เจ๊", "เฮีย", "น้า", "อา", "หมอ"]
+PREFIXES_FEMALE = ["นาง", "นางสาว", "คุณ", "พี่", "น้อง", "ป้า", "ยาย", "เจ๊", "น้า", "อา", "หมอ"]
+PREFIXES_MALE = ["นาย", "คุณ", "พี่", "น้อง", "ลุง", "ตา", "เฮีย", "น้า", "อา", "หมอ"]
 
 def load_names_data():
-    """Load first names (male and female) and family names from dataset/thai_name/ files."""
-    first_names = []
+    """Load first names (male and female), nicknames, and family names from dataset/thai_name/ files."""
+    female_names = []
+    male_names = []
     last_names = []
+    female_nicknames = []
+    male_nicknames = []
     
     # Try relative path first, then absolute
     thai_name_dir = "dataset/thai_name"
@@ -24,33 +28,50 @@ def load_names_data():
     female_path = os.path.join(thai_name_dir, "female_names_th.txt")
     male_path = os.path.join(thai_name_dir, "male_names_th.txt")
     family_path = os.path.join(thai_name_dir, "family_names_th.txt")
+    female_nick_path = os.path.join(thai_name_dir, "nickname_female_th.txt")
+    male_nick_path = os.path.join(thai_name_dir, "nickname_male_th.txt")
     
     try:
         if os.path.exists(female_path):
             with open(female_path, "r", encoding="utf-8") as f:
-                first_names.extend([line.strip() for line in f if line.strip()])
+                female_names.extend([line.strip() for line in f if line.strip()])
         if os.path.exists(male_path):
             with open(male_path, "r", encoding="utf-8") as f:
-                first_names.extend([line.strip() for line in f if line.strip()])
+                male_names.extend([line.strip() for line in f if line.strip()])
         if os.path.exists(family_path):
             with open(family_path, "r", encoding="utf-8") as f:
                 last_names.extend([line.strip() for line in f if line.strip()])
+        if os.path.exists(female_nick_path):
+            with open(female_nick_path, "r", encoding="utf-8") as f:
+                female_nicknames.extend([line.strip() for line in f if line.strip()])
+        if os.path.exists(male_nick_path):
+            with open(male_nick_path, "r", encoding="utf-8") as f:
+                male_nicknames.extend([line.strip() for line in f if line.strip()])
     except Exception as e:
         print(f"Error loading name files: {e}")
         
-    first_names = list(set([n for n in first_names if n]))
+    female_names = list(set([n for n in female_names if n]))
+    male_names = list(set([n for n in male_names if n]))
     last_names = list(set([n for n in last_names if n]))
+    female_nicknames = list(set([n for n in female_nicknames if n]))
+    male_nicknames = list(set([n for n in male_nicknames if n]))
     
     # Fallbacks if files are missing or empty
-    if not first_names:
-        first_names = ["สมชาย", "สมศรี", "ป้าดา", "ยายแม้น", "พี่แดง", "น้องกานต์", "ลุงป้อม", "เจ๊พร"]
+    if not female_names:
+        female_names = ["สมศรี", "ป้าดา", "ยายแม้น", "เจ๊พร", "แดง", "กานต์", "สมเกียรติ"]
+    if not male_names:
+        male_names = ["สมชาย", "ลุงป้อม", "สมศักดิ์", "วิชิต", "แดง", "กานต์", "สมเกียรติ"]
     if not last_names:
         last_names = ["ใจดี", "กองแก้ว", "ทองดี", "รักชาติ", "มั่นคง"]
+    if not female_nicknames:
+        female_nicknames = ["กิ๊ฟ", "ฝ้าย", "ส้ม", "แป้ง", "ก้อย"]
+    if not male_nicknames:
+        male_nicknames = ["เบียร์", "บอม", "แบงค์", "แม็ค", "เก่ง"]
         
-    return first_names, last_names
+    return female_names, male_names, last_names, female_nicknames, male_nicknames
 
 # Load name lists at startup
-FIRST_NAMES, LAST_NAMES = load_names_data()
+FEMALE_NAMES, MALE_NAMES, LAST_NAMES, FEMALE_NICKNAMES, MALE_NICKNAMES = load_names_data()
 
 def load_symptoms_data():
     """Load symptom banks from dataset/sample_iitt_thai folder."""
@@ -98,24 +119,46 @@ def load_symptoms_data():
 
 SYMPTOMS_BANK = load_symptoms_data()
 
-def generate_random_name():
-    """Generate a Thai name info dictionary containing prefix, first name, last name, and full name."""
-    prefix = random.choice(PREFIXES) if random.random() < 0.5 else None
-    first_name = random.choice(FIRST_NAMES)
+def generate_random_name(gender=None):
+    """Generate a Thai name info dictionary containing prefix, first name, last name, nickname, full name, and gender."""
+    if not gender:
+        gender = random.choice(["female", "male"])
+        
+    if gender == "female":
+        first_name = random.choice(FEMALE_NAMES)
+        nickname = random.choice(FEMALE_NICKNAMES) if random.random() < 0.5 else None
+        prefix = random.choice(PREFIXES_FEMALE) if random.random() < 0.5 else None
+    else:
+        first_name = random.choice(MALE_NAMES)
+        nickname = random.choice(MALE_NICKNAMES) if random.random() < 0.5 else None
+        prefix = random.choice(PREFIXES_MALE) if random.random() < 0.5 else None
+        
     last_name = random.choice(LAST_NAMES) if random.random() < 0.5 else None
     
-    full_name = ""
-    if prefix:
-        full_name += prefix
-    full_name += first_name
-    if last_name:
-        full_name += " " + last_name
-        
+    # Sometimes just refer to them by their nickname in social media text (20% chance)
+    use_only_nickname = random.random() < 0.2 and nickname is not None
+    if use_only_nickname:
+        full_name = nickname
+        if prefix:
+            full_name = prefix + nickname
+        first_name = nickname
+        last_name = None
+    else:
+        full_name = ""
+        if prefix:
+            full_name += prefix
+        full_name += first_name
+        if last_name:
+            full_name += " " + last_name
+            
     return {
         "name": full_name,
         "first_name": first_name,
         "last_name": last_name,
-        "prefix": prefix
+        "nickname": nickname,
+        "prefix": prefix,
+        "gender": gender,
+        "use_only_nickname": use_only_nickname
     }
 
 
@@ -259,23 +302,35 @@ Format instructions:
 def generate_random_parameters(location_pool):
     """Generate ground truth parameters randomly based on plan_dataset_ner.md configurations."""
     # 1. Contacts
-    victim_name_info = generate_random_name()
-    reporter_name_info = generate_random_name()
-    while reporter_name_info["first_name"] == victim_name_info["first_name"]:
-        reporter_name_info = generate_random_name()
-        
-    victim_phone = generate_thai_phone()
-    reporter_phone = generate_thai_phone()
+    # Decide if reporter is the same person as the victim (40% chance)
+    reporter_is_victim = random.random() < 0.4
     
-    # Phone scenarios
-    scenario = random.choice(["A", "B", "C", "D"])
-    if scenario == "B":
-        reporter_phone = None
-    elif scenario == "C":
-        victim_phone = None
-    elif scenario == "D":
-        victim_phone = None
-        reporter_phone = None
+    victim_name_info = generate_random_name()
+    if reporter_is_victim:
+        reporter_name_info = victim_name_info
+        victim_phone = generate_thai_phone()
+        reporter_phone = victim_phone
+        # Either both have the phone (80% chance) or neither does (20% chance)
+        if random.random() < 0.2:
+            victim_phone = None
+            reporter_phone = None
+    else:
+        reporter_name_info = generate_random_name()
+        while reporter_name_info["first_name"] == victim_name_info["first_name"]:
+            reporter_name_info = generate_random_name()
+            
+        victim_phone = generate_thai_phone()
+        reporter_phone = generate_thai_phone()
+        
+        # Phone scenarios
+        scenario = random.choice(["A", "B", "C", "D"])
+        if scenario == "B":
+            reporter_phone = None
+        elif scenario == "C":
+            victim_phone = None
+        elif scenario == "D":
+            victim_phone = None
+            reporter_phone = None
         
     # Generate victims list (1 to 3 victims)
     num_victims = random.randint(1, 3)
@@ -302,20 +357,21 @@ def generate_random_parameters(location_pool):
         triage_color = random.choice(["RED", "YELLOW", "GREEN"])
         
         # Name: 30% chance of a specific name, 70% null
+        gender = random.choice(["female", "male"])
         name = None
         if random.random() < 0.3:
-            name_info = generate_random_name()
-            # If child, maybe use prefix like น้อง
+            name_info = generate_random_name(gender=gender)
             if age_group == "child":
                 name = f"น้อง{name_info['first_name']}"
             else:
-                prefix = random.choice(["คุณ", "ลุง", "ป้า", "ยาย", "ตา", "พี่", "น้า"])
+                prefix_pool = ["คุณ", "พี่", "น้า", "ป้า", "ยาย", "เจ๊"] if gender == "female" else ["คุณ", "พี่", "น้า", "ลุง", "ตา", "เฮีย"]
+                prefix = random.choice(prefix_pool)
                 name = f"{prefix}{name_info['first_name']}"
         
         # Special case: map one victim's name to the contact_victim's name if we have a name and want to link it
         if idx == 0 and name is not None:
-            victim_name_info["name"] = name
-            victim_name_info["first_name"] = name.replace("น้อง", "").replace("คุณ", "").replace("ลุง", "").replace("ป้า", "").replace("ยาย", "").replace("ตา", "").replace("พี่", "").replace("น้า", "")
+            name = victim_name_info["name"]
+            gender = victim_name_info["gender"]
             
         # Get symptom from loaded bank
         symptoms_pool = SYMPTOMS_BANK[age_group][triage_color]
@@ -326,6 +382,7 @@ def generate_random_parameters(location_pool):
             "age": age,
             "age_group": age_group,
             "age_disclosure": age_disclosure,
+            "gender": gender,
             "triage_color": triage_color,
             "symptoms_literal": symptoms_literal
         })
@@ -384,6 +441,8 @@ def generate_random_parameters(location_pool):
             "first_name": victim_name_info["first_name"],
             "last_name": victim_name_info["last_name"],
             "prefix": victim_name_info["prefix"],
+            "nickname": victim_name_info["nickname"],
+            "gender": victim_name_info["gender"],
             "phone": victim_phone
         },
         "contact_reporter": {
@@ -391,6 +450,8 @@ def generate_random_parameters(location_pool):
             "first_name": reporter_name_info["first_name"],
             "last_name": reporter_name_info["last_name"],
             "prefix": reporter_name_info["prefix"],
+            "nickname": reporter_name_info["nickname"],
+            "gender": reporter_name_info["gender"],
             "phone": reporter_phone
         },
         "victims_list": victims_list,
@@ -417,6 +478,13 @@ You will be given a set of Ground Truth parameters (names, phones, victims count
 
 Your goal is to output the generated Thai message in plain text.
 
+STYLE TEMPLATE INSTRUCTIONS (CRITICAL FOR NATURALNESS):
+- The `style_template` is provided ONLY as a reference for: writing style, slang, sentence length, level of urgency, emotional tone, emoji usage, typos, or particles (ครับ/ค่ะ/นะ).
+- The factual CONTENT of the `style_template` (specific names, phone numbers, locations, or counts) must be completely IGNORED.
+- You MUST write a completely new message that uses the style and tone of the template, but reflects ONLY the facts and data given in the `parameters`. Do NOT carry over any names, phones, or locations from the template.
+- If the parameters contain a phone number or location, but the template does not, you MUST still write them in the generated message naturally.
+- DO NOT generate formal, polite, or robotic AI-like text (such as "เรียนเจ้าหน้าที่ที่เกี่ยวข้อง ข้าพเจ้าต้องการ..." or "ประกาศขอความช่วยเหลือ..."). The text must read like a real, stressed person typing on a mobile phone during a crisis (short, emotional, slightly chaotic, with emojis, typos, or local Thai terms like เจ๊, เฮีย, กู้ภัย, อาสา).
+
 CRITICAL RULES FOR NATURAL THAI PHRASING:
 
 1. DO NOT write numbers or counts in a literal, robotic, or template-like way.
@@ -428,11 +496,13 @@ CRITICAL RULES FOR NATURAL THAI PHRASING:
    - Location Name: If `location_name` parameter is provided (not null), you MUST integrate that exact location name into the generated message. You can add natural prefixes/suffixes (e.g. "พิกัดซอย...", "ติดอยู่ตรง...") but keep the exact name intact for validation. If `location_name` is null, do NOT mention any location name, landmark, road, or sub-district in the text.
    - Google Map URL: If `google_map_url` is provided (not null), you MUST integrate the Google Map URL into the generated message. If it is null, do NOT include any Google Map URL.
    - Lat/Lng Coordinates: If `lat` and `lng` are provided (not 0.0), you MUST integrate the latitude and longitude coordinate values (e.g. "13.7563, 100.5018" or "พิกัด 20.4272 99.8847") into the message. If they are 0.0, do NOT include any coordinate numbers.
-4. Integrate names and phones naturally:
+4. Integrate names, nicknames, and phones naturally:
    - Integrate the names exactly as provided in the parameters (including prefixes and last names if present) in a natural way. For example, if name is "คุณสมชาย ใจดี" or "ป้าดา", write it as "คุณสมชาย ใจดี" or "ป้าดา" in the text.
+   - Nicknames: If `nickname` is provided (not null) and `use_only_nickname` is false, you can optionally integrate the nickname into the text next to their name (e.g., "ติดต่อ แบงค์ (ปิยะ)", "ป้าสมศรี (ป้าดา)"). If `use_only_nickname` is true, write the nickname (which is already set in their `name` field).
    - For phone numbers, place them as contacts (e.g., "โทรหาพี่แดงได้เลยครับ 081-xxx-xxxx" or "ติดต่อผู้ประสานงาน 089xxxxxxx").
    - If a phone number is specified as "null" or missing, do NOT put any placeholder or phone number for that person.
-   - Separate victim's phone and reporter's phone correctly based on the parameters.
+   - Same Person Scenario: If `contact_victim` and `contact_reporter` have the exact same name, it means the victim is reporting for themselves (first-person report). Write the message from the first-person perspective (e.g., using "ผม", "ฉัน", "หนู") and only mention their name and phone number once in the message (e.g., "ผมชื่อวิน โทร 081-xxx-xxxx ช่วยผมด้วยครับ").
+   - Different Persons Scenario: If their names are different, write the message from the reporter's perspective on behalf of the victim (e.g., "ช่วยป้าสมศรีด้วยครับ ติดต่อผมวิชิต โทร 092-xxx-xxxx").
 5. Keep the tone realistic: Use exclamation marks, crying emojis (😭, 🙏, 🚨), local abbreviations, spelling variants typical of social media typing under stress, or polite particles like ครับ/ค่ะ/นะคะ.
 6. The generated message MUST be in Thai and must closely match the situation details represented by the parameters.
 7. VICTIMS CATEGORY GUIDELINES (Aligning with clinical criteria):
@@ -491,6 +561,11 @@ def generate_other_message(client, style_template, sub_category, retries=3):
 You will be given a sub-category of "other" (warning, prayer, donation, update) and a style template.
 
 Your goal is to output the generated Thai message in plain text.
+
+STYLE TEMPLATE INSTRUCTIONS (CRITICAL):
+- The `style_template` is provided ONLY as a reference for style, slang, tone, and emoji usage. Ignore its specific facts.
+- Generate a new message that strictly belongs to the specified `sub_category`, using the style of the template.
+- Avoid robotic or formal language. The post must look like a natural social media post (tweet/Facebook comment) in Thai.
 
 CRITICAL RULES FOR "OTHER" MESSAGES:
 1. DO NOT mention any specific individuals needing rescue or medical help in the text.
@@ -729,8 +804,12 @@ def main():
             "gt_lng": params["location"]["lng"],
             "gt_victim_name": params["contact_victim"]["name"],
             "gt_victim_phone": params["contact_victim"]["phone"],
+            "gt_victim_gender": params["contact_victim"].get("gender"),
+            "gt_victim_nickname": params["contact_victim"].get("nickname"),
             "gt_reporter_name": params["contact_reporter"]["name"],
             "gt_reporter_phone": params["contact_reporter"]["phone"],
+            "gt_reporter_gender": params["contact_reporter"].get("gender"),
+            "gt_reporter_nickname": params["contact_reporter"].get("nickname"),
             "gt_victims_json": json.dumps(params["victims_list"], ensure_ascii=False),
             "gt_dead": params["victims"]["dead"],
             "gt_critical": params["victims"]["critical"],
