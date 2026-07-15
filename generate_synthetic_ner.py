@@ -248,8 +248,30 @@ Format instructions:
         "ชุมชนเกดแก้ว ต.วารินชำราบ อ.วารินชำราบ อุบลราชธานี"
     ]
     
+    import re
+    
+    def repair_json_list(text):
+        """Extract and repair any potentially truncated or malformed JSON list of strings."""
+        text = text.strip()
+        
+        # Try direct parsing first
+        try:
+            val = json.loads(text)
+            if isinstance(val, list):
+                return val
+        except Exception:
+            pass
+            
+        # Regex to find all valid quoted strings
+        # Matches double quoted strings correctly handling escapes
+        matches = list(re.finditer(r'"([^"\\]*(?:\\.[^"\\]*)*)"', text))
+        if matches:
+            return [m.group(1) for m in matches]
+            
+        return []
+        
     pool = []
-    chunk_size = 50
+    chunk_size = 30
     chunks = (num_needed + chunk_size - 1) // chunk_size
     
     for i in range(chunks):
@@ -264,7 +286,7 @@ Format instructions:
                         {"role": "user", "content": f"Generate a JSON list of exactly {chunk_size} unique Thai location names for flood disaster reports."}
                     ],
                     temperature=1.0,
-                    max_tokens=1500
+                    max_tokens=2048
                 )
                 content = response.choices[0].message.content.strip()
                 if "```json" in content:
@@ -272,15 +294,12 @@ Format instructions:
                 elif "```" in content:
                     content = content.split("```")[1].split("```")[0].strip()
                 
-                data = json.loads(content)
-                if isinstance(data, list):
+                data = repair_json_list(content)
+                if data:
                     pool.extend(data)
-                elif isinstance(data, dict):
-                    for val in data.values():
-                        if isinstance(val, list):
-                            pool.extend(val)
-                            break
-                break
+                    break
+                else:
+                    raise ValueError("No valid location strings found in LLM response")
             except Exception as e:
                 print(f"Error generating location pool chunk (attempt {attempt+1}): {e}")
                 time.sleep(backoff + random.uniform(0, 0.5))
