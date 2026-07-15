@@ -201,7 +201,7 @@ graph TD
 
 | รูปแบบโมเดล / การทดลอง (Model / Experiment) | รูปแบบการเรียนรู้ (Learning Style) | Informativeness F1 | Category F1 (Humanitarian) |
 | :--- | :--- | :---: | :---: |
-| **CNN Baseline (Text-only)** [10] | Supervised (Fine-tuned) | 0.8090 | **0.6770** |
+| **CNN Baseline (Text-only)** [15] | Supervised (Fine-tuned) | 0.8090 | **0.6770** |
 | **Typhoon-v2.5 (Exp 2E - V2)** *(งานวิจัยนี้)* | **Zero-Shot** Joint | **0.9070** 🚀 | 0.6493 |
 | **DeepSeek-v4-flash (Exp 2E - COT)** *(งานวิจัยนี้)* | **Zero-Shot** Joint + COT | 0.8943 | 0.6432 |
 | **Gemma-4 (Exp 3F - V3)** *(งานวิจัยนี้)* | **Few-Shot** Sequential Agent | 0.9023 | 0.6430 |
@@ -828,3 +828,7 @@ e:/nlp-for-disaster/
 14. **หลักการ Instruction Tuning และการออกแบบคำสั่งแบบ Natural Language (FLAN - Instruction-Style Prompt Design Reference):**
     * Wei, J., Bosma, M., Zhao, V. Y., Guu, K., Yu, A. W., Lester, B., Du, N., Dai, A. M., & Le, Q. V. (2022). *Finetuned Language Models Are Zero-Shot Learners*. **International Conference on Learning Representations (ICLR)**.
     * 👉 ลิงก์เข้าถึงเอกสาร: [https://arxiv.org/abs/2109.01652](https://arxiv.org/abs/2109.01652)
+
+15. **เอกสารอ้างอิงสำหรับการประเมินเปรียบเทียบกับ CNN Baseline (CNN Baseline Reference):**
+    * Ofli, F., Alam, F., & Imran, M. (2020). *Analysis of Social Media Data using Multimodal Deep Learning for Disaster Response*. **arXiv preprint arXiv:2004.11838**.
+    * 👉 ลิงก์เข้าถึงเอกสาร: [https://doi.org/10.48550/arXiv.2004.11838](https://doi.org/10.48550/arXiv.2004.11838)
