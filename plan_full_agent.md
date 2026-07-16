@@ -83,8 +83,8 @@ class VictimsCount(BaseModel):
     critical: int = Field(default=0, description="Number of people trapped, missing, in severe danger or severely injured")
     urgent: int = Field(default=0, description="Number of injured or sick people needing prompt assistance")
     safe: int = Field(default=0, description="Number of people reported safe/evacuated")
-    child: int = Field(default=0, description="Number of children affected")
-    infant: int = Field(default=0, description="Number of infants affected")
+    child: int = Field(default=0, description="Number of children affected (including infants)")
+    bedridden: int = Field(default=0, description="Number of bedridden patients affected")
 
 class ItemsCount(BaseModel):
     firstAid: int = Field(default=0, description="Quantity/Need of first-aid kits or medicine (1 if needed but quantity not specified)")
@@ -161,14 +161,45 @@ Call the function 'classify_disaster' with your decision.
 ### 4.2 Agent 2: NER Prompt (เช่นเดียวกับ Exp 04)
 ```markdown
 [System Instruction]
-You are a disaster response information analyst. Your task is to analyze social media posts (tweets) or alerts about disasters in Thailand and extract key named entities.
+You are an expert disaster response information analyst. Your task is to analyze Thai social media posts about flood disasters and extract key named entities, contact information, victim counts, needed items, and coordinates from the text.
 
 [User Prompt Template]
-Tweet: "{text}"
+Analyze the following post and extract information according to the definitions and rules:
 
-Analyze the tweet and extract information according to the definitions and rules below.
+Post: "{text}"
 
-(รายละเอียดฟิลด์ message_more_detail, contact_victim, contact_reporter, victims count, items, coordinates จะอ้างอิงจากแผนการทดลอง 04)
+EXTRACTION RULES:
+
+1. CONTACT DETAILS (contact_victim and contact_reporter):
+   - Identify if the post is a first-person report (the victim reports for themselves, e.g., using "ผม", "ฉัน", "หนู" to describe their own situation) or a third-person report (a reporter reports on behalf of a victim).
+   - contact_victim: The person who is in danger/needs help. If it is a first-person report, extract their name, nickname, phone, and gender here. If third-person, extract the victim's details here. **Rule: If a name is mentioned in the text and it is not explicitly stated to be a separate reporter/informant, default to treating them as the victim (contact_victim).**
+   - contact_reporter: The person reporting the incident. If it is a first-person report, this should contain the exact same details as contact_victim. If third-person, extract the reporter's details here.
+   - For both contacts, extract:
+     - name: Full name (including prefix like นาย, นาง, คุณ, พี่, น้อง, เจ๊, เฮีย, ลุง, ป้า, ยาย, ตา, หมอ) if mentioned. If only a nickname is used as their name, put it in 'name'. Set to null if not mentioned.
+     - nickname: Extract the nickname (e.g., แบงค์, ส้ม, ป้าดา) if explicitly mentioned. Set to null if not mentioned.
+     - phone: Extract the Thai mobile phone number (e.g., starts with 08, 09, 06). Keep it exactly as written in the text (with dashes, spaces, or raw digits). Set to null if not mentioned.
+     - gender: Infer gender ('male' or 'female') from prefixes, pronouns (ผม/ครับ -> male, ค่ะ/หนู/ฉัน -> female), nicknames, or typical Thai names. Set to null if cannot be determined.
+
+2. VICTIMS COUNT (victims):
+   - Extract counts of affected individuals based on their situation/symptom details in the text:
+     - dead: number of deceased/dead individuals explicitly mentioned.
+     - critical: number of victims in critical danger or RED triage condition (e.g., trapped on roof, landslide/debris collapse, swept away, unconscious/unresponsive, near-drowning, severe bleeding).
+     - urgent: number of victims injured or sick needing prompt help or YELLOW triage condition (e.g., bone fracture, high fever, severe diarrhea/vomiting, breathing difficulty).
+     - safe: number of survivors confirmed safe or evacuated, or GREEN triage (e.g., minor scratches, evacuated but safe).
+     - child: number of children affected (age <= 11, or described as "เด็กเล็ก", "ลูกสาวคนเล็ก", "น้อง", "ทารก").
+     - bedridden: number of bedridden patients affected (ผู้ป่วยติดเตียง, ป่วยติดเตียง, นอนติดเตียง).
+   - If any count is not explicitly specified, set to 0. Do not guess counts if not mentioned in the text.
+
+3. ITEMS NEEDED (items):
+   - Extract quantities of relief items needed. Set to the exact quantity if mentioned. If an item is needed but no quantity is specified, set to 1. If not needed, set to 0.
+     - firstAid: first-aid kits, medicine, medical supplies (ยารักษาโรค, ยา, ชุดปฐมพยาบาล).
+     - food: food, drinking water, meal boxes, food supplies (อาหาร, น้ำดื่ม, ข้าวกล่อง, ของกิน).
+     - energy: backup power, powerbanks, generators, flashlights, candles (ไฟสำรอง, แบตสำรอง, พาวเวอร์แบงค์, ไฟฉาย, เทียน, เครื่องปั่นไฟ).
+
+4. COORDINATES & MAPS (coordinates):
+   - location_name: The exact location name, landmark, road, village, or sub-district mentioned in the text. Keep the name exactly as written. Set to null if no location is mentioned.
+   - google_map_url: The Google Maps URL (e.g., https://maps.app.goo.gl/...) found in the text. Set to null if not present.
+   - lat & lng: Extract the latitude and longitude float values (e.g., "13.7563", "100.5018") if explicitly written as numbers in the text. Set both to 0.0 if not present. Do not look up or geocode coordinates.
 
 Call the function 'extract_information' with the extracted details.
 ```

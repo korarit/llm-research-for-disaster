@@ -1,147 +1,308 @@
 # แผนการทดลองใช้ LLM ในการคัดแยกข้อความแจ้งเตือนภัยพิบัติ (Disaster Alert Labeling Experiment - 04)
 
-เอกสารนี้รวบรวมข้อสรุปแนวทาง โครงสร้างการสกัดชื่อเฉพาะ (Named Entity Recognition - NER) และแนวทางการเขียน Prompt สำหรับการทดสอบร่วมกับ Large Language Model (LLM) ในเบื้องต้น สำหรับการทดลอง **Experiment 04**
+เอกสารนี้รวบรวมข้อสรุปแนวทาง โครงสร้าง## 1. โครงสร้างการสกัดชื่อจำเพาะ (Named Entity Recognition - NER)
 
----
+ในการสกัด Entity จากข้อความภัยพิบัติภาษาไทยของชุดข้อมูลสังเคราะห์ (Synthetic Dataset) จะมุ่งเน้นไปที่ข้อมูลหลัก 4 ส่วนที่ถูกสร้างขึ้นโดยเครื่องมือจำลองสถานการณ์:
+1. **Location & Coordinates (สถานที่และพิกัด)**: สกัดชื่อสถานที่เกิดเหตุ (ถนน, ตำบล, อำเภอ, จังหวัด, จุดสังเกต), Google Map URL และพิกัดทางภูมิศาสตร์ (Latitude, Longitude) ที่ระบุในข้อความโดยตรง
+2. **Contact Details (ข้อมูลติดต่อ)**: สกัดชื่อ (Name), ชื่อเล่น (Nickname), เบอร์โทรศัพท์ (Phone) และเพศ (Gender) ของผู้ประสบภัยหลัก (contact_victim) และผู้แจ้งเหตุ (contact_reporter)
+3. **Victims Count (จำนวนผู้ประสบภัย)**: สกัดจำนวนผู้เสียชีวิต (dead), ผู้ประสบภัยวิกฤต (critical), ผู้ประสบภัยเร่งด่วน (urgent), ผู้ประสบภัยที่ปลอดภัย (safe), จำนวนเด็ก (child - รวมทารกด้วย) และผู้ป่วยติดเตียง (bedridden)
+4. **Items Needed (สิ่งของที่จำเป็น)**: สกัดจำนวน/ความต้องการอุปกรณ์ปฐมพยาบาล/ยา (firstAid), อาหาร/น้ำดื่ม (food) และระบบไฟฟ้าสำรอง/ไฟฉาย/พาวเวอร์แบงค์ (energy)
 
-## 1. โครงสร้างการสกัดชื่อจำเพาะ (Named Entity Recognition - NER)
-
-ในการสกัด Entity จากข้อความภัยพิบัติภาษาไทย จะมุ่งเน้นไปที่ข้อมูลหลัก 4 ประเภท:
-1. **Disaster Type (ประเภทภัยพิบัติ)**: เช่น น้ำท่วม, น้ำป่าไหลหลาก, แผ่นดินไหว, ฝุ่น PM2.5, ไฟไหม้
-2. **Location (สถานที่เกิดเหตุ)**: ระบุขอบเขตพื้นที่ที่ได้รับผลกระทบ เช่น ถนน, ตำบล, อำเภอ, จังหวัด
-3. **Datetime (วันและเวลา)**: ช่วงเวลาที่เกิดเหตุ หรือช่วงเวลาที่การคาดการณ์จะมีผลบังคับใช้
-4. **Impact (ผลกระทบ)**: ความเสียหายที่ระบุ เช่น ถนนขาด, เสาไฟล้ม, จำนวนผู้บาดเจ็บ, ระดับน้ำความสูง
+*หมายเหตุ: ในการทดลอง Experiment 04 นี้ จะไม่มีการสกัดข้อมูลระดับความรุนแรง (Severity) หรือระดับประเภทภัยพิบัติอื่น ๆ*
 
 ---
 
 ## 2. การกำหนดค่าโมเดลและสถาปัตยกรรมระบบ (Model & Pipeline Architecture)
 
-ระบบการทดลองจะประยุกต์ใช้โมดูลและไลบรารีในลักษณะเดิมเพื่อทำการทดสอบโมเดล MoE ทั้ง 3 รุ่นร่วมกับชุดข้อมูลภัยพิบัติภาษาไทย:
+ระบบการทดลองจะประยุกต์ใช้โมดูลและไลบรารีในลักษณะเดิมเพื่อทำการทดสอบโมเดล MoE ทั้ง 3 รุ่นร่วมกับชุดข้อมูลภัยพิบัติภาษาไทยสังเคราะห์:
 
 ### 2.1 การเชื่อมต่อโมเดลผ่าน API
 การเชื่อมต่อโมเดลทุกตัวจะใช้การเรียก API ภายนอก (External API Call) ทั้งหมดผ่าน OpenAI-compatible client SDK โดยอ้างอิง Endpoint และคีย์ผู้ให้บริการดังนี้:
 
 1. **Gemma 4** (เข้าถึงผ่าน OpenRouter API):
    - **โมเดลคีย์:** `google/gemma-4-26b-a4b-it`
-   - **ไลบรารี:** `openai`
-   - **การกำหนดสิทธิ์:** คีย์จาก `os.environ.get("OPENROUTER_API_KEY")`
-   - **Endpoint:** `https://openrouter.ai/api/v1`
+   - ** Endpoint:** `https://openrouter.ai/api/v1`
+   - ** API Key:** `os.environ.get("OPENROUTER_API_KEY")`
 
 2. **deepseek-v4-flash** (เข้าถึงผ่าน OpenRouter API):
    - **โมเดลคีย์:** `deepseek/deepseek-v4-flash`
-   - **ไลบรารี:** `openai`
-   - **การกำหนดสิทธิ์:** คีย์จาก `os.environ.get("OPENROUTER_API_KEY")`
-   - **Endpoint:** `https://openrouter.ai/api/v1`
+   - ** Endpoint:** `https://openrouter.ai/api/v1`
+   - ** API Key:** `os.environ.get("OPENROUTER_API_KEY")`
 
 3. **typhoon-v2.5** (เข้าถึงผ่าน Typhoon API):
    - **โมเดลคีย์:** `typhoon-v2.5-30b-a3b-instruct`
-   - **ไลบรารี:** `openai`
-   - **การกำหนดสิทธิ์:** คีย์จาก `os.environ.get("TYPHOON_API_KEY")`
-   - **Endpoint:** `https://api.opn.ai/v1`
+   - ** Endpoint:** `https://api.opn.ai/v1`
+   - ** API Key:** `os.environ.get("TYPHOON_API_KEY")`
 
 ### 2.2 รูปแบบฟังก์ชันเรียกใช้งาน (Function Calling Schema)
-ในการประมวลผลข้อมูลผ่าน API จะใช้คุณลักษณะการเรียกฟังก์ชัน (Function Calling) โดยส่งฟังก์ชันที่มีอาร์กิวเมนต์ย่อยแบบแบนเรียบหลายตัว (Flat parameters) เข้าไปยังโมเดลโดยตรง เพื่อให้โมเดลกรอกข้อมูลลงในฟิลด์ต่าง ๆ โดยตรง (ไม่ใช่การส่ง Raw JSON String คืนกลับมาในพารามิเตอร์เดียว) โดยกำหนดโครงสร้างข้อมูลตามคลาส Pydantic ดังนี้:
+
+ในการประมวลผลข้อมูลผ่าน API จะใช้คุณลักษณะการเรียกฟังก์ชัน (Function Calling) โดยแบ่งการประมวลผลเป็น 2 ขั้นตอน (2-Stage Pipeline):
+- **Stage 1 (Help Request Filtering)**: คัดแยกข้อความว่าต้องการขอความช่วยเหลือฉุกเฉิน (help_request) หรือเป็นข้อความประเภทอื่น (other เช่น เตือนภัยทั่วไป, ให้กำลังใจ/สวดมนต์, ขอรับบริจาคทั่วไป, อัปเดตสถานการณ์น้ำ)
+- **Stage 2 (NER Extraction)**: ดึงข้อมูล NER และตัวนับทางคลินิก/สิ่งของที่จำเป็นสำหรับข้อความที่ผ่านตัวกรองใน Stage 1
+
+กำหนดโครงสร้างข้อมูลสำหรับฟังก์ชันเรียกใช้งานในรูปแบบ Pydantic คลาส ดังนี้:
 
 ```python
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Optional
 
+# โครงสร้างสำหรับ Stage 1: Help Request Filtering
+class Stage1Result(BaseModel):
+    is_help_request: bool = Field(
+        description="True if the message is a direct request for emergency rescue, medical aid, or immediate basic needs (help_request). False if it is a general update, weather warning, prayer, general donation campaign, or other non-emergency content (other)."
+    )
+
+# โครงสร้างย่อยสำหรับ Stage 2: NER Extraction
 class ContactDetail(BaseModel):
-    name: Optional[str] = Field(description="Full name or first name if found, otherwise null")
-    nickname: Optional[str] = Field(description="Nickname if found, otherwise null")
-    phone: Optional[str] = Field(description="Phone number found in the tweet, otherwise null")
+    name: Optional[str] = Field(
+        description="Full name, first name, prefix + name, or nickname of the person. Set to null if not mentioned."
+    )
+    nickname: Optional[str] = Field(
+        description="Nickname of the contact person (e.g., แบงค์, ส้ม, ป้าดา) if explicitly mentioned. Set to null if not mentioned."
+    )
+    phone: Optional[str] = Field(
+        description="Thai mobile phone number found for this person (e.g. 0812345678, 089-123-4567). Keep spelling exactly as written. Set to null if not mentioned."
+    )
+    gender: Optional[str] = Field(
+        description="Gender of the contact ('male' or 'female') inferred from prefix, nicknames, pronouns, or name. Set to null if cannot be determined."
+    )
 
 class VictimsCount(BaseModel):
-    dead: int = Field(default=0, description="Number of dead people explicitly reported")
-    critical: int = Field(default=0, description="Number of people trapped, missing, in severe danger or severely injured")
-    urgent: int = Field(default=0, description="Number of injured or sick people needing prompt assistance")
-    safe: int = Field(default=0, description="Number of people reported safe/evacuated")
-    child: int = Field(default=0, description="Number of children affected")
-    infant: int = Field(default=0, description="Number of infants affected")
+    dead: int = Field(
+        default=0, 
+        description="Number of dead people explicitly reported"
+    )
+    critical: int = Field(
+        default=0, 
+        description="Number of people trapped, missing, in severe danger (e.g., RED triage: trapped on roof, landslide, swept away, unconscious, near-drowning, severe bleeding)"
+    )
+    urgent: int = Field(
+        default=0, 
+        description="Number of injured or sick people needing prompt assistance (e.g., YELLOW triage: bone fracture, high fever, severe diarrhea/vomiting, breathing difficulty)"
+    )
+    safe: int = Field(
+        default=0, 
+        description="Number of people reported safe/evacuated (e.g., GREEN triage: safe, evacuated, minor scratches)"
+    )
+    child: int = Field(
+        default=0, 
+        description="Number of children affected (age <= 11 or referred to as child/kid/น้อง/เด็ก/ทารก)"
+    )
+    bedridden: int = Field(
+        default=0, 
+        description="Number of bedridden patients (ผู้ป่วยติดเตียง, นอนติดเตียง, ป่วยติดเตียง)"
+    )
 
 class ItemsCount(BaseModel):
-    firstAid: int = Field(default=0, description="Quantity/Need of first-aid kits or medicine (1 if needed but quantity not specified)")
-    food: int = Field(default=0, description="Quantity/Need of food/drinking water (1 if needed but quantity not specified)")
-    energy: int = Field(default=0, description="Quantity/Need of flashlights, powerbanks, candles, or backup power (1 if needed but quantity not specified)")
+    firstAid: int = Field(
+        default=0, 
+        description="Quantity/Need of first-aid kits or medicine (ยารักษาโรค, ยา, ชุดปฐมพยาบาล). Set to quantity needed, or 1 if needed but quantity is not specified."
+    )
+    food: int = Field(
+        default=0, 
+        description="Quantity/Need of food/drinking water (อาหาร, น้ำดื่ม, ข้าวกล่อง, ของกิน). Set to quantity needed, or 1 if needed but quantity is not specified."
+    )
+    energy: int = Field(
+        default=0, 
+        description="Quantity/Need of flashlights, powerbanks, candles, or backup power (ไฟสำรอง, แบตสำรอง, พาวเวอร์แบงค์, ไฟฉาย, เทียน, เครื่องปั่นไฟ). Set to quantity needed, or 1 if needed but quantity is not specified."
+    )
 
 class CoordinatesDetail(BaseModel):
-    name: Optional[str] = Field(description="Specific location name, landmark, road, or sub-district name mentioned in the tweet")
-    google_map_url: Optional[str] = Field(default=None)
-    lat: float = Field(default=0.0)
-    lng: float = Field(default=0.0)
+    location_name: Optional[str] = Field(
+        description="Specific location name, landmark, road, or sub-district name mentioned in the text. Set to null if not mentioned."
+    )
+    google_map_url: Optional[str] = Field(
+        default=None, 
+        description="Google Map URL (e.g., https://maps.app.goo.gl/...) found in the text. Set to null if not mentioned."
+    )
+    lat: float = Field(
+        default=0.0, 
+        description="Latitude coordinate (e.g., 13.7563) found in the text. Set to 0.0 if not mentioned."
+    )
+    lng: float = Field(
+        default=0.0, 
+        description="Longitude coordinate (e.g., 100.5018) found in the text. Set to 0.0 if not mentioned."
+    )
 
 class NERResult(BaseModel):
-    message_more_detail: str = Field(description="Brief summary of the disaster incident details in Thai")
-    contact_victim: List[ContactDetail]
-    contact_reporter: List[ContactDetail]
+    message_more_detail: str = Field(
+        description="Brief summary of the disaster incident details in Thai"
+    )
+    contact_victim: Optional[ContactDetail] = Field(
+        description="Contact details of the victim. Set to null if not mentioned. If the victim is reporting for themselves (first-person), this should contain their details."
+    )
+    contact_reporter: Optional[ContactDetail] = Field(
+        description="Contact details of the reporter/informant who is reporting on behalf of the victim. Set to null if not mentioned. If first-person report, this should be the same as contact_victim."
+    )
     victims: VictimsCount
     items: ItemsCount
     coordinates: CoordinatesDetail
 ```
 
-### 2.3 หมายเหตุสำคัญเกี่ยวกับการทดลอง
-1. **สกัดข้อมูลจากข้อความ**: ข้อมูลบุคคล (`contact_victim`, `contact_reporter`), ข้อมูลผู้ประสบภัย (`victims`), และสิ่งของที่ต้องการ (`items`) จะถูกดึงและสรุปมาจากรายละเอียดในข้อความแจ้งเตือนดิบ
-2. **อย่าพึ่งเขียนโค้ดสำหรับ coordinates**: ในส่วนของ `coordinates` (`lat`, `lng`, `google_map_url`) จะยังไม่เขียนโค้ดให้โมเดลทำภูมิสารสนเทศหรือระบุพิกัดละติจูด/ลองจิจูดในเวลานี้ (ให้โมเดลคืนค่าโครงสร้างเปล่าหรือใช้ค่าเริ่มต้นไปก่อน เช่น `"lat": 0.0, "lng": 0.0`)
+### 2.3 ข้อกำหนดเฉพาะในการทดลอง
+1. **สกัดข้อมูลจากข้อความต้นฉบับเท่านั้น**: ห้ามใช้การเรียกโมเดลอื่นเสริมภายนอก (เช่น API ค้นหาภูมิศาสตร์ภายนอก) ให้สกัดพิกัด `lat`, `lng` และ `google_map_url` เฉพาะในกรณีที่เขียนระบุไว้ในข้อความโซเชียลมีเดียภาษาไทยเท่านั้น หากไม่มีระบุให้กำหนดค่าเริ่มต้นเป็น `0.0` และ `null` ตามลำดับ
+2. **ไม่ใช้ชุดข้อมูลในการเขียน Prompt**: ห้ามนำรายชื่อจังหวัด อำเภอ รายชื่อคน หรือชุดอาการจริงจากไฟล์ dataset มาเขียนเป็นคีย์เวิร์ดแบบ Hardcode ลงใน Prompt ของเอเจนต์เด็ดขาด (แต่ให้เขียนกฎคำอธิบายนิยามประเภทบุคคล เพศ และตัวนับทางคลินิกเป็นภาษาอังกฤษทั่วไป)
+3. **เรื่องความรุนแรง**: การทดลองนี้จะไม่มีการจัดระดับความรุนแรงของภัยพิบัติใด ๆ (ไม่มีฟิลด์ Severity)
 
 ---
 
-## 3. การออกแบบคำสั่ง (Prompt Design Template) - นำ Prompt Concept จาก 01TH มาปรับใช้
+## 3. การออกแบบคำสั่ง (Prompt Design Template)
 
-คำสั่งระบบและคำแนะนำสำหรับผู้ใช้งานจะอ้างอิงตาม Prompt Concept ของ **Experiment 01TH** โดยเขียนเป็นภาษาอังกฤษเพื่อประสิทธิภาพสูงสุดของโมเดล MoE และความคุ้มค่าด้าน Token (Token Cost Efficiency) แต่ทำการปรับปรุง Signal Words และ Edge Cases ให้เป็นคำภาษาไทยและตัวอย่างบริบทภาษาไทย เพื่อให้โมเดลสามารถวิเคราะห์และสกัดข้อมูลจากข้อความภาษาไทยได้อย่างถูกต้องและแม่นยำ:
+คำสั่งระบบและคำแนะนำสำหรับผู้ใช้งานจะเขียนเป็นภาษาอังกฤษเพื่อประสิทธิภาพสูงสุดของโมเดล MoE และความคุ้มค่าด้าน Token (Token Cost Efficiency) โดยกำหนดโครงสร้างของคำสั่งดังนี้:
 
-### 3.1 คำสั่งระบบ (System Instruction)
-```markdown
-You are a disaster response information analyst. Your task is to analyze social media posts (tweets) or alerts about disasters in Thailand and extract key named entities.
-```
+### 3.1 Stage 1: Help Request Filtering Prompt
+- **Function Name**: `filter_help_request`
+- **System Instruction**:
+  ```markdown
+  You are an expert disaster response analyst. Your task is to analyze social media posts (tweets or Facebook comments in Thai) and determine if they contain a direct request for emergency rescue, medical aid, or immediate assistance (such as food/water/power) for specific victims in danger.
+  ```
+- **User Prompt Template**:
+  ```markdown
+  Analyze the following post and determine if it is a direct help request:
+  
+  Post: "{text}"
+  
+  CLASSIFICATION RULES:
+  - set is_help_request to True (help_request) if the post contains an active report of victims needing rescue, medical aid, or immediate basic supplies (food, clean water, first aid, power).
+  - set is_help_request to False (other) if the post is:
+    - A general weather warning, rain warning, or evacuation announcement from authorities without reporting active trapped/injured victims.
+    - A post of moral support, prayers, or expressing condolences (e.g., "ขอให้ปลอดภัย", "ส่งกำลังใจให้").
+    - A general donation campaign, relief supply collection, or volunteer recruitment (e.g., "เปิดรับบริจาค", "รับบริจาค").
+    - A general situational update on water levels, road status, or weather without active victim rescue reports.
+  
+  Call the function 'filter_help_request' with your decision.
+  ```
 
-### 3.2 คำสั่งผู้ใช้ (User Prompt Template)
-```markdown
-Tweet: "{text}"
-
-Analyze the tweet and extract information according to the definitions and rules below.
-
-INFORMATION EXTRACTION (NER) INSTRUCTIONS:
-- message_more_detail: Briefly summarize additional situation details in Thai.
-- contact_victim: List of victims mentioned in the text. For each victim, extract "name", "nickname", "phone" (if not mentioned, set to null or empty list).
-- contact_reporter: List of reporters/informants. For each, extract "name", "nickname", "phone" (if not mentioned, set to null or empty list).
-- victims: Count of victims by category based on details in the text.
-  - dead: number of dead people reported
-  - critical: number of victims in critical condition (e.g., trapped, swept away, severely injured)
-  - urgent: number of victims needing urgent help (e.g., injured but stable, lacking supplies)
-  - safe: number of survivors confirmed safe
-  - child: number of children affected
-  - infant: number of infants affected
-  - If not specified, set counts to 0.
-- items: Count/need of relief items. Set to number needed, or 1 if needed but count not specified, and 0 if not needed:
-  - firstAid: first aid kits, medicine (ยารักษาโรค, ยา, ชุดปฐมพยาบาล)
-  - food: food, drinking water (อาหาร, น้ำดื่ม, ข้าวกล่อง, ของกิน)
-  - energy: power sources, flashlights, powerbanks, backup generators (ไฟสำรอง, แบตสำรอง, พาวเวอร์แบงค์, ไฟฉาย, เทียน, เครื่องปั่นไฟ)
-- coordinates: Set "name" to the location name mentioned in the text. Set "google_map_url" to null, and "lat" to 0.0, "lng" to 0.0 (do not try to resolve coordinates).
-
-Call the function 'extract_information' with the extracted details.
-```
+### 3.2 Stage 2: NER Extraction Prompt
+- **Function Name**: `extract_information`
+- **System Instruction**:
+  ```markdown
+  You are an expert disaster response information analyst. Your task is to analyze Thai social media posts about flood disasters and extract key named entities, contact information, victim counts, needed items, and coordinates from the text.
+  ```
+- **User Prompt Template**:
+  ```markdown
+  Analyze the following post and extract information according to the definitions and rules:
+  
+  Post: "{text}"
+  
+  EXTRACTION RULES:
+  
+  1. CONTACT DETAILS (contact_victim and contact_reporter):
+     - Identify if the post is a first-person report (the victim reports for themselves, e.g., using "ผม", "ฉัน", "หนู" to describe their own situation) or a third-person report (a reporter reports on behalf of a victim).
+     - contact_victim: The person who is in danger/needs help. If it is a first-person report, extract their name, nickname, phone, and gender here. If third-person, extract the victim's details here.
+     - contact_reporter: The person reporting the incident. If it is a first-person report, this should contain the exact same details as contact_victim. If third-person, extract the reporter's details here.
+     - For both contacts, extract:
+       - name: Full name (including prefix like นาย, นาง, คุณ, พี่, น้อง, เจ๊, เฮีย, ลุง, ป้า, ยาย, ตา, หมอ) if mentioned. If only a nickname is used as their name, put it in 'name'. Set to null if not mentioned.
+       - nickname: Extract the nickname (e.g., แบงค์, ส้ม, ป้าดา) if explicitly mentioned. Set to null if not mentioned.
+       - phone: Extract the Thai mobile phone number (e.g., starts with 08, 09, 06). Keep it exactly as written in the text (with dashes, spaces, or raw digits). Set to null if not mentioned.
+       - gender: Infer gender ('male' or 'female') from prefixes, pronouns (ผม/ครับ -> male, ค่ะ/หนู/ฉัน -> female), nicknames, or typical Thai names. Set to null if cannot be determined.
+  
+  2. VICTIMS COUNT (victims):
+     - Extract counts of affected individuals based on their situation/symptom details in the text:
+       - dead: number of deceased/dead individuals explicitly mentioned.
+       - critical: number of victims in critical danger or RED triage condition (e.g., trapped on roof, landslide/debris collapse, swept away, unconscious/unresponsive, near-drowning, severe bleeding).
+       - urgent: number of victims injured or sick needing prompt help or YELLOW triage condition (e.g., bone fracture, high fever, severe diarrhea/vomiting, breathing difficulty).
+       - safe: number of survivors confirmed safe or evacuated, or GREEN triage (e.g., minor scratches, evacuated but safe).
+       - child: number of children affected (age <= 11, or described as "เด็กเล็ก", "ลูกสาวคนเล็ก", "น้อง", "ทารก").
+       - bedridden: number of bedridden patients affected (ผู้ป่วยติดเตียง, ป่วยติดเตียง, นอนติดเตียง).
+     - If any count is not explicitly specified, set to 0. Do not guess counts if not mentioned in the text.
+  
+  3. ITEMS NEEDED (items):
+     - Extract quantities of relief items needed. Set to the exact quantity if mentioned. If an item is needed but no quantity is specified, set to 1. If not needed, set to 0.
+       - firstAid: first-aid kits, medicine, medical supplies (ยารักษาโรค, ยา, ชุดปฐมพยาบาล).
+       - food: food, drinking water, meal boxes, food supplies (อาหาร, น้ำดื่ม, ข้าวกล่อง, ของกิน).
+       - energy: backup power, powerbanks, generators, flashlights, candles (ไฟสำรอง, แบตสำรอง, พาวเวอร์แบงค์, ไฟฉาย, เทียน, เครื่องปั่นไฟ).
+  
+  4. COORDINATES & MAPS (coordinates):
+     - location_name: The exact location name, landmark, road, village, or sub-district mentioned in the text. Keep the name exactly as written. Set to null if no location is mentioned.
+     - google_map_url: The Google Maps URL (e.g., https://maps.app.goo.gl/...) found in the text. Set to null if not present.
+     - lat & lng: Extract the latitude and longitude float values (e.g., "13.7563", "100.5018") if explicitly written as numbers in the text. Set both to 0.0 if not present. Do not look up or geocode coordinates.
+  
+  Call the function 'extract_information' with the extracted details.
+  ```
 
 ---
 
 ## 4. แหล่งอ้างอิงและที่มา (References & Sources)
 
-1. **มาตรฐานการเตือนภัยสากล (CAP Standard)**
-   - **Common Alerting Protocol (CAP) Standard (ITU Recommendation X.1303)**: กรอบมาตรฐานสากลสำหรับการจัดส่งโครงสร้างข้อมูลเตือนภัยและระดับภัยพิบัติ (Severity, Urgency, Certainty)
-   - แหล่งข้อมูล: [ITU-T X.1303](https://www.itu.int/rec/T-REC-X.1303)
+1. **สคริปต์สกัดชุดข้อมูลสังเคราะห์ภาษาไทย**
+   - **ซอร์สโค้ด:** [generate_synthetic_ner.py](file:///e:/nlp-for-disaster/generate_synthetic_ner.py)
+   - สคริปต์นี้สร้างชุดข้อมูลจำลองความยาว 2,000 ข้อความ (`synthetic_ner_dataset.csv`) โดยดึงข้อมูล Ground Truth ของชื่อ เพศ เบอร์โทรศัพท์ สถานที่ พิกัด แผนที่ ตลอดจนจำนวนผู้ประสบภัยระดับ RED/YELLOW/GREEN และชนิดสิ่งของที่จำเป็น
 
-2. **เกณฑ์การตอบสนองภัยพิบัติของ FEMA**
-   - **FEMA Incident Complexity & Activation Levels**: แนวทางการแบ่งระดับปฏิบัติการฉุกเฉิน (Level I, II, III) ตามระดับผลกระทบและความพร้อมด้านทรัพยากร
-   - แหล่งข้อมูล: [FEMA Emergency Operations Center (EOC) Activation Levels](https://www.fema.gov/)
-
-3. **งานวิจัยที่เกี่ยวข้องและแนวคิดหลัก**
+2. **งานวิจัยที่เกี่ยวข้องและแนวคิดหลัก**
    - **ชื่องานวิจัย**: [Zero-Shot Social Media Crisis Classification: A Training-Free Multimodal Approach](https://digibug.ugr.es/bitstream/handle/10481/111587/applsci-16-02192.pdf?sequence=1&isAllowed=y) (MDPI Applied Sciences, 2026)
    - **ซอร์สโค้ดอ้างอิงของงานวิจัย (Local Workspace)**: [disaster_classification.ipynb](file:///e:/nlp-for-disaster/ref/disaster_classification.ipynb)
-   - **สกัดขั้นตอนการทำงานของซอร์สโค้ดต้นแบบ (How It Works)**:
-     โค้ดเตรียมนิเวศการรันและโมเดลสำหรับประมวลผลข้อมูลด้วยขั้นตอนดังนี้:
-     1. **Local LLM Server Hosting**:
-        ดาวน์โหลดโมเดลขนาดใหญ่ `Mistral-Small-3.1-24B-Instruct-2503` (ฟอร์慢 GGUF ระดับ Q6_K_L) พร้อมโมดูลสแกนภาพ (Pixtral Vision mmproj) และรันเซิร์ฟเวอร์แบบ Local โดยใช้ `llama-server` ผ่านคอมมานด์ไลน์เพื่อสร้าง API จำลองสากลที่เข้ากันได้กับ OpenAI API (`/chat/completions`) บนพอร์ต `8000` โดยใช้ค่า Parameter `-c 24576` (Context Window) และการทำงานขนานแบบ `--parallel 16`
-     2. **Image Preprocessing**:
-        โค้ดจัดการรูปภาพจากชุดข้อมูลก่อนส่งให้โมเดลประมวลผล โดยแปลงสีรูปจาก RGBA/อื่น ๆ ไปเป็น RGB, ย่อขนาดภาพให้เท่ากันที่ `512x512 px` (JPEG, Quality 85%) แล้วเปลี่ยนไฟล์รูปเป็น Base64 String เพื่อจัดชุดคำสั่งแบบ Multimodal (Text + Image) ส่งตรงผ่าน API
+
+---
+
+## 5. แนวทางการจัดเก็บข้อมูลและประเมินผล
+ผลลัพธ์จากชุดข้อมูลสังเคราะห์ทั้งหมด 2,000 รายการของ Experiment 04 จะถูกจัดเก็บไว้ในโครงสร้างดังนี้:
+
+```text
+e:/nlp-for-disaster/exp4/results/
+├── deepseek-v4-flash_results.csv        <- บันทึกผลการวิเคราะห์และโครงสร้าง NER ที่สกัดได้
+├── typhoon-v2.5_results.csv             <- บันทึกผลการวิเคราะห์และโครงสร้าง NER ที่สกัดได้
+├── gemma-4_results.csv                  <- บันทึกผลการวิเคราะห์และโครงสร้าง NER ที่สกัดได้
+└── model_comparison_metrics.csv         <- สรุปเปรียบเทียบผลลัพธ์การคัดแยกประเภทและ NER
+```
+
+### 5.1 โครงสร้างของไฟล์ CSV ผลลัพธ์รายโมเดล (Individual Model CSV Schema)
+
+| ชื่อคอลัมน์ (Column Name) | คำอธิบาย (Description) | ตัวอย่างข้อมูล (Example) |
+| :--- | :--- | :--- |
+| `synthetic_id` | ไอดีข้อความทวีตสังเคราะห์ (อิงจากชุดข้อมูลนำเข้า) | `SYN_NER_001` |
+| `generated_text` | ข้อความโซเชียลมีเดียภาษาไทยที่สังเคราะห์ขึ้น | *“ลุงสมชาย ใจดี ขาหักขยับไม่ได้... โทร 081-234-5678”* |
+| `pred_is_help_request` | ผลการคัดแยก Stage 1 (True / False) | `True` |
+| `pred_location_name` | ผลสกัดชื่อสถานที่ (`coordinates.location_name`) | `ซอย 4 เหมืองแดง แม่สาย เชียงราย` |
+| `pred_google_map_url` | ผลสกัดลิงก์แผนที่ (`coordinates.google_map_url`) | `https://maps.app.goo.gl/abcdefg` |
+| `pred_lat` | ผลสกัดพิกัดละติจูด (`coordinates.lat`) | `20.4272` |
+| `pred_lng` | ผลสกัดพิกัดลองจิจูด (`coordinates.lng`) | `99.8847` |
+| `pred_victim_name` | ผลสกัดชื่อผู้ประสบภัยหลัก (`contact_victim.name`) | `ลุงสมชาย ใจดี` |
+| `pred_victim_nickname` | ผลสกัดชื่อเล่นผู้ประสบภัยหลัก (`contact_victim.nickname`) | `สมชาย` |
+| `pred_victim_phone` | ผลสกัดเบอร์โทรผู้ประสบภัยหลัก (`contact_victim.phone`) | `081-234-5678` |
+| `pred_victim_gender` | เพศที่สกัดได้ของผู้ประสบภัยหลัก (`contact_victim.gender`) | `male` |
+| `pred_reporter_name` | ผลสกัดชื่อผู้แจ้งเรื่อง (`contact_reporter.name`) | `ลุงสมชาย ใจดี` |
+| `pred_reporter_nickname` | ผลสกัดชื่อเล่นผู้แจ้งเรื่อง (`contact_reporter.nickname`) | `สมชาย` |
+| `pred_reporter_phone` | ผลสกัดเบอร์โทรผู้แจ้งเรื่อง (`contact_reporter.phone`) | `081-234-5678` |
+| `pred_reporter_gender` | เพศที่สกัดได้ของผู้แจ้งเรื่อง (`contact_reporter.gender`) | `male` |
+| `pred_dead` | จำนวนผู้เสียชีวิตที่สกัดได้ (`victims.dead`) | `0` |
+| `pred_critical` | จำนวนเคสวิกฤต/สีแดงที่สกัดได้ (`victims.critical`) | `0` |
+| `pred_urgent` | จำนวนเคสเร่งด่วน/สีเหลืองที่สกัดได้ (`victims.urgent`) | `1` |
+| `pred_safe` | จำนวนเคสปลอดภัย/สีเขียวที่สกัดได้ (`victims.safe`) | `0` |
+| `pred_child` | จำนวนเด็กที่สกัดได้ (`victims.child`) | `0` |
+| `pred_bedridden` | จำนวนผู้ป่วยติดเตียงที่สกัดได้ (`victims.bedridden`) | `0` |
+| `pred_item_firstaid` | จำนวนความต้องการชุดปฐมพยาบาล (`items.firstAid`) | `1` |
+| `pred_item_food` | จำนวนความต้องการอาหารและน้ำ (`items.food`) | `0` |
+| `pred_item_energy` | จำนวนความต้องการพลังงาน/ไฟฉาย (`items.energy`) | `0` |
+| `latency_seconds` | ระยะเวลาที่ใช้ประมวลผลสะสมในสอง Stage (วินาที) | `1.5` |
+| `token_in_use` | จำนวน Token ขาเข้าสะสมที่ใช้ประมวลผลเอเจนต์ | `520` |
+| `token_out_use` | จำนวน Token ขาออกสะสมที่ใช้ประมวลผลเอเจนต์ | `120` |
+
+### 5.2 การคำนวณมาตรวัดความแม่นยำ (Evaluation Metrics)
+
+การวัดความถูกต้องจะถูกวิเคราะห์แยกส่วนตามประเภทข้อมูล ดังนี้:
+
+1. **Stage 1 (Classification)**:
+   - ตรวจสอบ `pred_is_help_request` เทียบกับ `gt_is_help_request` (ข้อมูลทุกแถว 2,000 แถว)
+   - คำนวณหาค่า: **Accuracy**, **Precision**, **Recall**, และ **F1-Score**
+
+2. **Stage 2 (NER Entity Extraction)**:
+   (จะถูกประเมินเฉพาะในแถวที่เฉลยจริง `gt_is_help_request == True` เท่านั้น)
+   - **ข้อมูลเบอร์โทรศัพท์ (Phone Numbers)**:
+     - นำข้อความที่สกัดได้มาตัดอักขระที่ไม่ใช่ตัวเลขออกให้เหลือเฉพาะตัวเลข (เช่น `081-234-5678` -> `0812345678`)
+     - ทำการประเมินเทียบ Ground Truth แบบ **Exact Match (EM)**
+   - **ข้อมูลข้อความทั่วไป (Names, Nicknames, Location Name, Google Map URL)**:
+     - ทำความสะอาดข้อมูลโดยตัดช่องว่าง (Whitespace) หัวท้าย และปรับอักษรภาษาอังกฤษเป็นตัวเล็ก (Lowercase)
+     - เปรียบเทียบแบบ **Exact Match (EM)** โดยกรณีที่ไม่มีระบุทั้งคู่ (มีค่าเป็น `null` หรือ `None`) ให้นับเป็น EM = 1
+   - **ข้อมูลเพศ (Gender)**:
+     - เปรียบเทียบค่าตรงกันตามข้อความ `male`, `female` หรือ `null` แบบ Exact Match
+   - **ข้อมูลพิกัดละติจูด/ลองจิจูด (Coordinates)**:
+     - ตรวจสอบค่าพิกัด `lat`, `lng` แบบค่าสัมบูรณ์ผลต่างความคลาดเคลื่อน (Absolute Difference Tolerance)
+     - โดยการทำนายจะถือว่าถูกต้องหาก `abs(pred_coord - gt_coord) < 0.001` (หรือพิกัดเป็น 0.0 ทั้งคู่)
+   - **ข้อมูลจำนวนนับตัวเลข (Victims and Items Counts)**:
+     - ประเมินผลแยกรายฟิลด์ทั้ง 9 ฟิลด์ (dead, critical, urgent, safe, child, bedridden, firstaid, food, energy)
+     - คำนวณหาค่า: **Mean Absolute Error (MAE)** และอัตราความถูกต้องตรงกันแบบ **Exact Match Rate** ในแต่ละฟิลด์
+นาดภาพให้เท่ากันที่ `512x512 px` (JPEG, Quality 85%) แล้วเปลี่ยนไฟล์รูปเป็น Base64 String เพื่อจัดชุดคำสั่งแบบ Multimodal (Text + Image) ส่งตรงผ่าน API
      3. **Structured API Query & JSON Validation**:
         ส่ง Request ไปยังเซิร์ฟเวอร์ด้วยหัวข้อความจำเพาะ โดยระบุอุณหภูมิโมเดลเป็น `temperature: 0` เพื่อผลลัพธ์ที่แน่นอนและเสถียรที่สุด และบังคับควบคุมโครงสร้างผลลัพธ์ด้วยการส่ง **JSON Schema** เข้าไปในระบบ ได้แก่:
         - `text_analysis`: ประเมินความเกี่ยวข้อง (`informativeness` เป็น `informative` / `not_informative`) และจำแนกกลุ่มความช่วยเหลือมนุษยธรรมตามเกณฑ์ (`category` 8 คลาส)
@@ -188,7 +349,7 @@ e:/nlp-for-disaster/exp4/results/
 | `predicted_victims_urgent` | จำนวนผู้ประสบภัยต้องการช่วยเหลือด่วน (ฟิลด์ `victims.urgent`) | `0` |
 | `predicted_victims_safe` | จำนวนผู้ประสบภัยที่ปลอดภัย (ฟิลด์ `victims.safe`) | `2` |
 | `predicted_victims_child` | จำนวนเด็กที่สกัดได้ (ฟิลด์ `victims.child`) | `1` |
-| `predicted_victims_infant` | จำนวนเด็กทารกที่สกัดได้ (ฟิลด์ `victims.infant`) | `0` |
+| `predicted_victims_bedridden` | จำนวนผู้ป่วยติดเตียงที่สกัดได้ (ฟิลด์ `victims.bedridden`) | `0` |
 | `predicted_items_firstaid` | ความต้องการชุดปฐมพยาบาล (ฟิลด์ `items.firstAid`) | `1` |
 | `predicted_items_food` | ความต้องการอาหารและน้ำ (ฟิลด์ `items.food`) | `1` |
 | `predicted_items_energy` | ความต้องการแหล่งพลังงาน/ไฟสำรอง (ฟิลด์ `items.energy`) | `0` |

@@ -396,6 +396,11 @@ def generate_random_parameters(location_pool):
         symptoms_pool = SYMPTOMS_BANK[age_group][triage_color]
         symptoms_literal = random.choice(symptoms_pool) if symptoms_pool else ""
         
+        # Bedridden status: 15% chance for adult victims
+        is_bedridden = False
+        if age_group == "adult" and random.random() < 0.15:
+            is_bedridden = True
+            
         victims_list.append({
             "name": name,
             "age": age,
@@ -403,7 +408,8 @@ def generate_random_parameters(location_pool):
             "age_disclosure": age_disclosure,
             "gender": gender,
             "triage_color": triage_color,
-            "symptoms_literal": symptoms_literal
+            "symptoms_literal": symptoms_literal,
+            "is_bedridden": is_bedridden
         })
         
     # Deriving aggregate counts
@@ -412,7 +418,7 @@ def generate_random_parameters(location_pool):
     urgent = sum(1 for v in victims_list if v["triage_color"] == "YELLOW")
     safe = sum(1 for v in victims_list if v["triage_color"] == "GREEN")
     child = sum(1 for v in victims_list if v["age_group"] == "child")
-    infant = sum(1 for v in victims_list if v["age"] is not None and v["age"] <= 1)
+    bedridden = sum(1 for v in victims_list if v.get("is_bedridden", False))
     
     # 3. Items Needed (50% chance of 0, 30% chance of 1, 20% chance of 2-20)
     def get_item():
@@ -480,7 +486,7 @@ def generate_random_parameters(location_pool):
             "urgent": urgent,
             "safe": safe,
             "child": child,
-            "infant": infant
+            "bedridden": bedridden
         },
         "items": {
             "firstAid": firstAid,
@@ -536,10 +542,11 @@ CRITICAL RULES FOR NATURAL THAI PHRASING:
 7. VICTIMS LIST INSTRUCTIONS:
    - If `age_group` is "child":
      - If `age_disclosure` is "direct" (and age is not null), specify their exact age (e.g., "อายุ 5 ขวบ", "5 ขวบ").
-     - If `age_disclosure` is "indirect" (or age is null), refer to them using child-related terms (e.g., "เด็กเล็ก", "ลูกสาวคนเล็ก", "น้อง") without writing the exact age number.
+     - If `age_disclosure` is "indirect" (or age is null), refer to them using child-related terms (e.g., "เด็กเล็ก", "ลูกสาวคนเล็ก", "น้อง") without writing the exact age number. (Note: infant/ทารก is also counted as a child, you can use "ทารก" or "เด็กแดง" if they are very young).
    - If `age_group` is "adult":
      - If `age` is not null and `age_disclosure` is "direct", specify their exact age (e.g., "อายุ 45 ปี", "วัย 45 ปี").
-     - If `age` is null or `age_disclosure` is "indirect", refer to them using adult/elderly words (e.g., "คุณยาย", "ลุงข้างบ้าน", "ผู้ป่วยติดเตียง", "แม่ของฉัน") without writing any age numbers.
+     - If `age` is null or `age_disclosure` is "indirect", refer to them using adult/elderly words (e.g., "คุณยาย", "ลุงข้างบ้าน", "แม่ของฉัน") without writing any age numbers.
+   - Bedridden Status: If the victim is marked as bedridden (is_bedridden is true), you MUST explicitly describe them in the message as a bedridden patient (ผู้ป่วยติดเตียง, นอนติดเตียง, ป่วยติดเตียง). If they are not marked as bedridden, do NOT describe them as bedridden.
     - Symptoms & Triage Color:
       For each victim, you MUST integrate the exact Thai text provided in their `symptoms_literal` field into the generated message. Do not translate, change, or paraphrase this symptom text. You must write it exactly as provided in the parameter, but integrate it naturally with prefixes/suffixes (e.g., "ตอนนี้คุณป้า...มีอาการ[symptoms_literal]...", "ติดอยู่ตรง...[symptoms_literal]...").
 """
@@ -656,7 +663,7 @@ def generate_other_parameters():
             "urgent": 0,
             "safe": 0,
             "child": 0,
-            "infant": 0
+            "bedridden": 0
         },
         "items": {
             "firstAid": 0,
@@ -835,7 +842,7 @@ def main():
             "gt_urgent": params["victims"]["urgent"],
             "gt_safe": params["victims"]["safe"],
             "gt_child": params["victims"]["child"],
-            "gt_infant": params["victims"]["infant"],
+            "gt_bedridden": params["victims"]["bedridden"],
             "gt_item_firstaid": params["items"]["firstAid"],
             "gt_item_food": params["items"]["food"],
             "gt_item_energy": params["items"]["energy"],
